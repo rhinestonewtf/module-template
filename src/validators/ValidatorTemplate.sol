@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.17;
 
-import {UserOperation, BaseValidator} from "./BaseValidator.sol";
+import {UserOperation, BaseValidator} from "@rhinestone/modulekit/contracts/modules/validators/BaseValidator.sol";
 
 contract ValidatorTemplate is BaseValidator {
     /**

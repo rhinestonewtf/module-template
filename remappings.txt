@@ -1,0 +1,6 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
+@openzeppelin/contracts-upgradeable/=lib/module-kit/lib/openzeppelin/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=lib/module-kit/lib/openzeppelin/openzeppelin/openzeppelin-contracts/contracts/
+@rhinestone/modulekit/=lib/module-kit/src/
