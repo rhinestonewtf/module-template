@@ -1,10 +1,10 @@
-account-abstraction/=lib/module-kit/lib/account-abstraction/contracts/
-solady/=lib/module-kit/lib/solady/src/
-solmate/=lib/module-kit/lib/solmate/src/
-@aa/=lib/module-kit/lib/account-abstraction/contracts/
+account-abstraction/=lib/modulekit/lib/account-abstraction/contracts/
+solady/=lib/modulekit/lib/solady/src/
+solmate/=lib/modulekit/lib/solmate/src/
+@aa/=lib/modulekit/lib/account-abstraction/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
-@openzeppelin/contracts-upgradeable/=lib/module-kit/lib/openzeppelin/openzeppelin-contracts-upgradeable/contracts/
-@openzeppelin/contracts/=lib/module-kit/lib/openzeppelin/openzeppelin-contracts/contracts/
-@rhinestone/modulekit/=lib/module-kit/src/
+@openzeppelin/contracts-upgradeable/=lib/modulekit/lib/openzeppelin/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=lib/modulekit/lib/openzeppelin/openzeppelin-contracts/contracts/
+@rhinestone/modulekit/=lib/modulekit/src/

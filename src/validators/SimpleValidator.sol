@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.17;
+pragma solidity ^0.8.19;
 
 import {UserOperation, BaseValidator} from "@rhinestone/modulekit/contracts/modules/validators/BaseValidator.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";

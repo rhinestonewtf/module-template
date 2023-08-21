@@ -3,19 +3,19 @@ pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {RhinestoneSDK, RhinestoneSDKLib, AccountInstance} from "@rhinestone/modulekit/test/utils/safe-base/RhinestoneSDK.sol";
+import {RhinestoneModuleKit, RhinestoneModuleKitLib, RhinestoneAccount} from "@rhinestone/modulekit/test/utils/safe-base/RhinestoneModuleKit.sol";
 import {SimpleValidator} from "../../../src/validators/SimpleValidator.sol";
 
-contract SimpleValidatorTest is Test, RhinestoneSDK {
-    using RhinestoneSDKLib for AccountInstance;
+contract SimpleValidatorTest is Test, RhinestoneModuleKit {
+    using RhinestoneModuleKitLib for RhinestoneAccount;
     using ECDSA for bytes32;
 
-    AccountInstance instance;
+    RhinestoneAccount instance;
     SimpleValidator simpleValidator;
 
     function setUp() public {
         // Setup account
-        instance = newInstance("1");
+        instance = makeRhinestoneAccount("1");
         vm.deal(instance.account, 10 ether);
 
         // Setup validator
