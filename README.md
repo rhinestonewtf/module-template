@@ -27,4 +27,4 @@ $ forge install
 $ forge test
 ```
 
-[module-kit]: https://github.com/rhinestonewtf/module-kit
+[module-kit]: https://github.com/rhinestonewtf/modulekit
