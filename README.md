@@ -18,13 +18,19 @@ For a guided walkthrough of building a module, check out our [tutorials page](ht
 ### Install dependencies
 
 ```shell
-$ forge install
+forge install
+```
+
+### Update dependencies
+
+```shell
+git submodule update --remote
 ```
 
 ### Run tests
 
 ```shell
-$ forge test
+forge test
 ```
 
 [module-kit]: https://github.com/rhinestonewtf/modulekit
