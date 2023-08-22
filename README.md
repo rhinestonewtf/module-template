@@ -7,7 +7,7 @@
 To learn more, check out:
 
 - [ModuleKit][module-kit]
-- [rhinestone docs](https://docs.rhinestone.wtf/modules/modulekit)
+- [Rhinestone docs](https://docs.rhinestone.wtf/modules/modulekit)
 
 ## Tutorials
 
