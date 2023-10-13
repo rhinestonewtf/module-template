@@ -7,4 +7,4 @@ forge-std/=lib/forge-std/src/
 lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
 @openzeppelin/contracts-upgradeable/=lib/modulekit/lib/openzeppelin/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/modulekit/lib/openzeppelin/openzeppelin-contracts/contracts/
-@rhinestone/modulekit/=lib/modulekit/src/
+modulekit/=lib/modulekit/src/
