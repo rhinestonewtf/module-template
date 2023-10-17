@@ -17,5 +17,6 @@ contract DeployModuleScript is Script, ModuleDeployer {
 
         vm.stopBroadcast();
         console.log("Module deployed at: %s", moduleAddr);
+         console.log("See module details at: https://dev.rhinestone.wtf/%s", moduleAddr);
     }
 }
