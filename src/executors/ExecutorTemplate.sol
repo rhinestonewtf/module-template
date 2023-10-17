@@ -1,9 +1,29 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
-import {ExecutorBase} from "modulekit/modulekit/ExecutorBase.sol";
+import { ExecutorBase } from "modulekit/modulekit/ExecutorBase.sol";
+import { IExecutorManager, ExecutorAction, ModuleExecLib } from "modulekit/modulekit/IExecutor.sol";
 
 contract ExecutorTemplate is ExecutorBase {
+    using ModuleExecLib for IExecutorManager;
+
+    /**
+     * @notice A function that executes an action.
+     * @param account address of the account
+     * @param data bytes data to be used for execution
+     */
+    function executeAction(address account, bytes memory data) external {
+        // Get the manager from data
+        (IExecutorManager manager) = abi.decode(data, (IExecutorManager));
+
+        // Create the actions to be executed
+        ExecutorAction[] memory actions = new ExecutorAction[](2);
+        actions[0] = ExecutorAction({ to: payable(msg.sender), value: 1 wei, data: "" });
+
+        // Execute the actions
+        manager.exec(account, actions);
+    }
+
     /**
      * @notice A funtion that returns name of the executor
      * @return name string name of the executor
@@ -25,7 +45,15 @@ contract ExecutorTemplate is ExecutorBase {
      * @return providerType uint256 Type of metadata provider
      * @return location bytes
      */
-    function metadataProvider() external view override returns (uint256 providerType, bytes memory location) {}
+    function metadataProvider()
+        external
+        view
+        override
+        returns (uint256 providerType, bytes memory location)
+    {
+        providerType = 0;
+        location = "";
+    }
 
     /**
      * @notice A function that indicates if the executor requires root access to a Safe.
@@ -34,14 +62,4 @@ contract ExecutorTemplate is ExecutorBase {
     function requiresRootAccess() external view override returns (bool requiresRootAccess) {
         requiresRootAccess = false;
     }
-
-    /**
-     * @notice Query if a contract implements an interface
-     * @param interfaceID The interface identifier, as specified in ERC-165
-     * @dev Interface identification is specified in ERC-165. This function
-     * uses less than 30,000 gas.
-     * @return `true` if the contract implements `interfaceID` and
-     * `interfaceID` is not 0xffffffff, `false` otherwise
-     */
-    function supportsInterface(bytes4 interfaceID) external view returns (bool) {}
 }

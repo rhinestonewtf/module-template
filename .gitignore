@@ -12,3 +12,12 @@ docs/
 
 # Dotenv file
 .env
+
+# Samples
+/src/validators/SimpleValidator.sol
+/src/executors/SimpleExecutor.sol
+/src/hooks/SimpleHook.sol
+
+/test/validators/SimpleValidator.t.sol
+/test/executors/SimpleExecutor.t.sol
+/test/hooks/SimpleHook.t.sol

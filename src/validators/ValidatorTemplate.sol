@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 import {
-    ValidatorBase, UserOperation, VALIDATION_SUCCESS, ERC1271_MAGICVALUE
+    ValidatorBase,
+    UserOperation,
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED,
+    ERC1271_MAGICVALUE
 } from "modulekit/modulekit/ValidatorBase.sol";
 
 contract ValidatorTemplate is ValidatorBase {
@@ -12,7 +16,10 @@ contract ValidatorTemplate is ValidatorBase {
      * @param userOpHash Hash of the User Operation to be validated.
      * @return sigValidationResult 0 if signature is valid, 1 otherwise.
      */
-    function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash)
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    )
         external
         view
         override
@@ -27,7 +34,10 @@ contract ValidatorTemplate is ValidatorBase {
      * @param moduleSignature Signature to be validated.
      * @return eip1271Result 0x1626ba7e if signature is valid, 0xffffffff otherwise.
      */
-    function isValidSignature(bytes32 signedDataHash, bytes memory moduleSignature)
+    function isValidSignature(
+        bytes32 signedDataHash,
+        bytes memory moduleSignature
+    )
         public
         view
         override
