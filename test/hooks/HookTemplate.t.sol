@@ -6,13 +6,15 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
-} from "modulekit/test/utils/biconomy-base/RhinestoneModuleKit.sol";
+} from "modulekit/test/utils/safe-base/RhinestoneModuleKit.sol";
 import { HookTemplate } from "../../src/hooks/HookTemplate.sol";
+import { ExecutorTemplate } from "../../src/executors/ExecutorTemplate.sol";
 
 contract HookTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount;
 
     RhinestoneAccount instance;
+    ExecutorTemplate executorTemplate;
     HookTemplate hookTemplate;
 
     function setUp() public {
@@ -20,14 +22,29 @@ contract HookTemplateTest is Test, RhinestoneModuleKit {
         instance = makeRhinestoneAccount("1");
         vm.deal(instance.account, 10 ether);
 
+        // Setup executor
+        executorTemplate = new ExecutorTemplate();
+
+        // Add executor to account
+        instance.addExecutor(address(executorTemplate));
+
         // Setup hook
         hookTemplate = new HookTemplate();
 
         // Add hook to account
-        // @TODO
+        instance.addHook(address(hookTemplate));
     }
 
-    function testSendEth() public {
-        // @TODO
+    function testExecuteAction() public {
+        // Create target and ensure that it doesnt have a balance
+        address target = makeAddr("target");
+        assertEq(target.balance, 0);
+
+        // Execute action from target using vm.prank()
+        vm.prank(target);
+        executorTemplate.executeAction(instance.account, abi.encode(instance.aux.executorManager));
+
+        // Assert that target has a balance of 1 wei
+        assertEq(target.balance, 1 wei);
     }
 }
