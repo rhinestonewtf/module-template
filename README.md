@@ -1,6 +1,6 @@
 ## Module Template
 
-**A template for building smart account modules using the [ModuleKit][https://github.com/rhinestonewtf/modulekit]**
+**A template for building smart account modules using the [ModuleKit](https://github.com/rhinestonewtf/modulekit)**
 
 ## Usage
 
