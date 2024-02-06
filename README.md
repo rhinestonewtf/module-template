@@ -7,13 +7,13 @@
 ### Install dependencies
 
 ```shell
-forge install
+pnpm install
 ```
 
 ### Update ModuleKit
 
 ```shell
-forge update rhinestonewtf/modulekit
+pnpm update rhinestonewtf/modulekit
 ```
 
 ### Building modules
