@@ -19,7 +19,7 @@ contract ExecutorTemplate is ERC7579ExecutorBase {
     /* De-initialize the module with the given data
      * @param data The data to de-initialize the module with
      */
-    function onUninstall(bytes calldata) external override { }
+    function onUninstall(bytes calldata data) external override { }
 
     /*
      * Check if the module is initialized
@@ -38,11 +38,11 @@ contract ExecutorTemplate is ERC7579ExecutorBase {
      */
 
     /*
-        * Execute the given data
-        * @dev This is an example function that can be used to execute arbitrary data
-        * @dev This function is not part of the ERC-7579 standard
-        * @param data The data to execute
-        */
+     * Execute the given data
+     * @dev This is an example function that can be used to execute arbitrary data
+     * @dev This function is not part of the ERC-7579 standard
+     * @param data The data to execute
+     */
     function execute(bytes calldata data) external {
         IERC7579Account(msg.sender).executeFromExecutor(ModeLib.encodeSimpleSingle(), data);
     }

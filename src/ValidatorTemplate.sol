@@ -18,7 +18,7 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
     /* De-initialize the module with the given data
      * @param data The data to de-initialize the module with
      */
-    function onUninstall(bytes calldata) external override { }
+    function onUninstall(bytes calldata data) external override { }
 
     /*
      * Check if the module is initialized
