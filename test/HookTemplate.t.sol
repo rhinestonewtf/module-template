@@ -6,8 +6,9 @@ import {
     RhinestoneModuleKit,
     ModuleKitHelpers,
     ModuleKitUserOp,
-    RhinestoneAccount
+    AccountInstance
 } from "modulekit/ModuleKit.sol";
+import { MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
 import { HookTemplate } from "src/HookTemplate.sol";
 
 contract HookTemplateTest is RhinestoneModuleKit, Test {
@@ -15,7 +16,7 @@ contract HookTemplateTest is RhinestoneModuleKit, Test {
     using ModuleKitUserOp for *;
 
     // account and modules
-    RhinestoneAccount internal instance;
+    AccountInstance internal instance;
     HookTemplate internal hook;
 
     function setUp() public {
@@ -26,9 +27,9 @@ contract HookTemplateTest is RhinestoneModuleKit, Test {
         vm.label(address(hook), "HookTemplate");
 
         // Create the account and install the hook
-        instance = makeRhinestoneAccount("HookTemplate");
+        instance = makeAccountInstance("HookTemplate");
         vm.deal(address(instance.account), 10 ether);
-        instance.installHook(address(hook), "");
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
     }
 
     function testExec() public {

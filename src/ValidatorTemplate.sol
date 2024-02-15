@@ -2,25 +2,31 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
-import { UserOperation } from "modulekit/external/ERC4337.sol";
+import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract ValidatorTemplate is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
+                                    CONSTANTS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    /* Initialize the module with the given data
+    /**
+     * Initialize the module with the given data
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override { }
 
-    /* De-initialize the module with the given data
+    /**
+     * De-initialize the module with the given data
      * @param data The data to de-initialize the module with
      */
     function onUninstall(bytes calldata data) external override { }
 
-    /*
+    /**
      * Check if the module is initialized
      * @param smartAccount The smart account to check
      * @return true if the module is initialized, false otherwise
@@ -32,7 +38,7 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Validates UserOperation
+     * Validates PackedUserOperation
      * @param userOp UserOperation to be validated.
      * @param userOpHash Hash of the UserOperation to be validated.
      * @return sigValidationResult the result of the signature validation, which can be:
@@ -42,7 +48,7 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
      * for more details)
      */
     function validateUserOp(
-        UserOperation calldata userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         external
@@ -96,11 +102,11 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
         return "0.0.1";
     }
 
-    /* 
-        * Check if the module is of a certain type
-        * @param typeID The type ID to check
-        * @return true if the module is of the given type, false otherwise
-        */
+    /**
+     * Check if the module is of a certain type
+     * @param typeID The type ID to check
+     * @return true if the module is of the given type, false otherwise
+     */
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }

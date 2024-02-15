@@ -6,17 +6,18 @@ import {
     RhinestoneModuleKit,
     ModuleKitHelpers,
     ModuleKitUserOp,
-    RhinestoneAccount
+    AccountInstance
 } from "modulekit/ModuleKit.sol";
-import { ExecutorTemplate } from "src/ExecutorTemplate.sol";
+import { MODULE_TYPE_EXECUTOR } from "modulekit/external/ERC7579.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { ExecutorTemplate } from "src/ExecutorTemplate.sol";
 
 contract ExecutorTemplateTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     // account and modules
-    RhinestoneAccount internal instance;
+    AccountInstance internal instance;
     ExecutorTemplate internal executor;
 
     function setUp() public {
@@ -27,9 +28,13 @@ contract ExecutorTemplateTest is RhinestoneModuleKit, Test {
         vm.label(address(executor), "ExecutorTemplate");
 
         // Create the account and install the executor
-        instance = makeRhinestoneAccount("ExecutorTemplate");
+        instance = makeAccountInstance("ExecutorTemplate");
         vm.deal(address(instance.account), 10 ether);
-        instance.installExecutor(address(executor), "");
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: address(executor),
+            data: ""
+        });
     }
 
     function testExec() public {

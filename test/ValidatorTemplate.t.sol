@@ -6,9 +6,10 @@ import {
     RhinestoneModuleKit,
     ModuleKitHelpers,
     ModuleKitUserOp,
-    RhinestoneAccount,
+    AccountInstance,
     UserOpData
 } from "modulekit/ModuleKit.sol";
+import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { ValidatorTemplate } from "src/ValidatorTemplate.sol";
 
 contract ValidatorTemplateTest is RhinestoneModuleKit, Test {
@@ -16,7 +17,7 @@ contract ValidatorTemplateTest is RhinestoneModuleKit, Test {
     using ModuleKitUserOp for *;
 
     // account and modules
-    RhinestoneAccount internal instance;
+    AccountInstance internal instance;
     ValidatorTemplate internal validator;
 
     function setUp() public {
@@ -27,9 +28,13 @@ contract ValidatorTemplateTest is RhinestoneModuleKit, Test {
         vm.label(address(validator), "ValidatorTemplate");
 
         // Create the account and install the validator
-        instance = makeRhinestoneAccount("ValidatorTemplate");
+        instance = makeAccountInstance("ValidatorTemplate");
         vm.deal(address(instance.account), 10 ether);
-        instance.installValidator(address(validator), "");
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(validator),
+            data: ""
+        });
     }
 
     function testExec() public {

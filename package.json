@@ -11,12 +11,16 @@
     "url": "https://github.com/rhinestonewtf/module-template/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "5.0.1"
+    "@prb/math": "^4.0.2",
+    "@safe-global/safe-contracts": "1.4.1-build.0",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation"
   },
   "devDependencies": {
-    "@rhinestone/modulekit": "github:rhinestonewtf/modulekit#dev",
+    "@openzeppelin/contracts": "5.0.1",
+    "@rhinestone/modulekit": "github:rhinestonewtf/modulekit",
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
+    "account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
