@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import { ERC7579ExecutorBase } from "modulekit/Modules.sol";
 import { IERC7579Account } from "modulekit/Accounts.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract ExecutorTemplate is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -75,10 +74,4 @@ contract ExecutorTemplate is ERC7579ExecutorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    /**
-     * Get the module types
-     * @return moduleTypes The bit-encoded module types
-     */
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 }

@@ -18,9 +18,8 @@
   "devDependencies": {
     "@openzeppelin/contracts": "5.0.1",
     "@rhinestone/modulekit": "github:rhinestonewtf/modulekit",
-    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
-    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
-    "account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",

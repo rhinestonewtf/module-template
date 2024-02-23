@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract ValidatorTemplate is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -110,10 +109,4 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    /**
-     * Get the module types
-     * @return moduleTypes The bit-encoded module types
-     */
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 }

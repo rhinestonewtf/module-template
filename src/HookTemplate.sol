@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "modulekit/modules/ERC7579HookBase.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract HookTemplate is ERC7579HookBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -84,10 +83,4 @@ contract HookTemplate is ERC7579HookBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    /**
-     * Get the module types
-     * @return moduleTypes The bit-encoded module types
-     */
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 }
