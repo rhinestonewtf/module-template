@@ -72,6 +72,6 @@ contract ExecutorTemplate is ERC7579ExecutorBase {
         * @return true if the module is of the given type, false otherwise
         */
     function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_VALIDATOR;
+        return typeID == TYPE_EXECUTOR;
     }
 }

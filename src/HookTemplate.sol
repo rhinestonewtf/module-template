@@ -81,6 +81,6 @@ contract HookTemplate is ERC7579HookBase {
         * @return true if the module is of the given type, false otherwise
         */
     function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_VALIDATOR;
+        return typeID == TYPE_HOOK;
     }
 }
