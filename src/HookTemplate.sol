@@ -12,19 +12,24 @@ contract HookTemplate is ERC7579HookBase {
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    /* Initialize the module with the given data
+    /**
+     * Initialize the module with the given data
+     *
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override { }
 
-    /* De-initialize the module with the given data
+    /**
+     * De-initialize the module with the given data
+     *
      * @param data The data to de-initialize the module with
      */
     function onUninstall(bytes calldata data) external override { }
 
-    /*
+    /**
      * Check if the module is initialized
      * @param smartAccount The smart account to check
+     *
      * @return true if the module is initialized, false otherwise
      */
     function isInitialized(address smartAccount) external view returns (bool) { }
@@ -35,15 +40,20 @@ contract HookTemplate is ERC7579HookBase {
 
     /**
      * Pre-checks an execution
+     *
+     * @param account The account address
      * @param msgSender The sender of the execution to the account
      * @param msgData The data of the execution
+     *
      * @return hookData The data to be used in the post-check
      */
-    function preCheck(
+    function _preCheck(
+        address account,
         address msgSender,
+        uint256 msgValue,
         bytes calldata msgData
     )
-        external
+        internal
         override
         returns (bytes memory hookData)
     {
@@ -52,11 +62,15 @@ contract HookTemplate is ERC7579HookBase {
 
     /**
      * Post-checks an execution
+     *
+     * @param account The account address
      * @param hookData The data from the pre-check
-     * @return success true if the execution is successful, false otherwise
      */
-    function postCheck(bytes calldata hookData) external override returns (bool success) {
-        (success) = abi.decode(hookData, (bool));
+    function _postCheck(address account, bytes calldata hookData) internal override {
+        (bool success) = abi.decode(hookData, (bool));
+        if (!success) {
+            revert("HookTemplate: execution failed");
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -69,6 +83,7 @@ contract HookTemplate is ERC7579HookBase {
 
     /**
      * The name of the module
+     *
      * @return name The name of the module
      */
     function name() external pure returns (string memory) {
@@ -77,17 +92,20 @@ contract HookTemplate is ERC7579HookBase {
 
     /**
      * The version of the module
+     *
      * @return version The version of the module
      */
     function version() external pure returns (string memory) {
         return "0.0.1";
     }
 
-    /* 
-        * Check if the module is of a certain type
-        * @param typeID The type ID to check
-        * @return true if the module is of the given type, false otherwise
-        */
+    /**
+     * Check if the module is of a certain type
+     *
+     * @param typeID The type ID to check
+     *
+     * @return true if the module is of the given type, false otherwise
+     */
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_HOOK;
     }
