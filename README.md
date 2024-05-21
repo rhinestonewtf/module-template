@@ -2,7 +2,7 @@
 
 **A template for building smart account modules using the [ModuleKit](https://github.com/rhinestonewtf/modulekit)**
 
-## Usage
+## Using the template
 
 ### Install dependencies
 
@@ -55,3 +55,27 @@ source .env && forge verify-contract --chain-id [YOUR_CHAIN_ID] --watch --ethers
 ## Tutorials
 
 For general explainers and guided walkthroughs of building a module, check out our [documentation](https://docs.rhinestone.wtf/modulekit).
+
+## Using this repo
+
+To install the dependencies, run:
+
+```bash
+pnpm install
+```
+
+To build the project, run:
+
+```bash
+forge build
+```
+
+To run the tests, run:
+
+```bash
+forge test
+```
+
+## Contributing
+
+For feature or change requests, feel free to open a PR, start a discussion or get in touch with us.
