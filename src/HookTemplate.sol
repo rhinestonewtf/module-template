@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579HookBase } from "modulekit/modules/ERC7579HookBase.sol";
+import { ERC7579HookBase } from "modulekit/Modules.sol";
 
 contract HookTemplate is ERC7579HookBase {
     /*//////////////////////////////////////////////////////////////////////////
