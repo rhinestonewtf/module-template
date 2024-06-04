@@ -25,7 +25,7 @@
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
   },
   "dependencies": {
-    "@rhinestone/modulekit": "^0.4.1"
+    "@rhinestone/modulekit": "^0.4.4"
   },
   "files": [
     "src",
