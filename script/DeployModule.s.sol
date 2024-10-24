@@ -12,18 +12,18 @@ contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
         // Setup module bytecode, deploy params, and data
         bytes memory bytecode = type(ValidatorTemplate).creationCode;
-        bytes memory deployParams = "";
-        bytes memory data = "";
+        bytes memory resolverContext = "";
+        bytes memory metadata = "";
 
         // Get private key for deployment
         vm.startBroadcast(vm.envUint("PK"));
 
         // Deploy module
         address module = deployModule({
-            code: bytecode,
-            deployParams: deployParams,
+            initCode: bytecode,
+            resolverContext: resolverContext,
             salt: bytes32(0),
-            data: data
+            metadata: metadata
         });
 
         // Stop broadcast and log module address
