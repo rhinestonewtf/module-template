@@ -25,10 +25,7 @@
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
   },
   "dependencies": {
-    "@rhinestone/modulekit": "github:rhinestonewtf/modulekit#ab4ab5d382a1bab3dea1c88ecf0d050e111e2db4"
-  },
-  "devDependencies": {
-    "solhint": "^5.0.3"
+    "@rhinestone/modulekit": "^0.5.1"
   },
   "files": [
     "src",
