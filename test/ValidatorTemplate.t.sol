@@ -5,16 +5,14 @@ import { Test } from "forge-std/Test.sol";
 import {
     RhinestoneModuleKit,
     ModuleKitHelpers,
-    ModuleKitUserOp,
     AccountInstance,
     UserOpData
 } from "modulekit/ModuleKit.sol";
-import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
+import { MODULE_TYPE_VALIDATOR } from "modulekit/accounts/common/interfaces/IERC7579Module.sol";
 import { ValidatorTemplate } from "src/ValidatorTemplate.sol";
 
 contract ValidatorTemplateTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
-    using ModuleKitUserOp for *;
 
     // account and modules
     AccountInstance internal instance;
