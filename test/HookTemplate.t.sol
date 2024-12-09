@@ -2,18 +2,12 @@
 pragma solidity ^0.8.23;
 
 import { Test } from "forge-std/Test.sol";
-import {
-    RhinestoneModuleKit,
-    ModuleKitHelpers,
-    ModuleKitUserOp,
-    AccountInstance
-} from "modulekit/ModuleKit.sol";
-import { MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
+import { RhinestoneModuleKit, ModuleKitHelpers, AccountInstance } from "modulekit/ModuleKit.sol";
+import { MODULE_TYPE_HOOK } from "modulekit/accounts/common/interfaces/IERC7579Module.sol";
 import { HookTemplate } from "src/HookTemplate.sol";
 
 contract HookTemplateTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
-    using ModuleKitUserOp for *;
 
     // account and modules
     AccountInstance internal instance;

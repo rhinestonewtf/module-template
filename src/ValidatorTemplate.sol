@@ -104,7 +104,6 @@ contract ValidatorTemplate is ERC7579ValidatorBase {
         external
         view
         virtual
-        override
         returns (bool validSig)
     {
         return false;

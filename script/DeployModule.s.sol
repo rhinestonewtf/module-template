@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Script.sol";
-import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
+import { RegistryDeployer } from "modulekit/deployment/registry/RegistryDeployer.sol";
 
 // Import modules here
 import { ValidatorTemplate } from "src/ValidatorTemplate.sol";
