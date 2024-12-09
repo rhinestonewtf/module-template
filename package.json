@@ -27,6 +27,9 @@
   "dependencies": {
     "@rhinestone/modulekit": "github:rhinestonewtf/modulekit#ab4ab5d382a1bab3dea1c88ecf0d050e111e2db4"
   },
+  "devDependencies": {
+    "solhint": "^5.0.3"
+  },
   "files": [
     "src",
     "test",
