@@ -1,0 +1,162 @@
+\chapter{Background}
+\label{chap:background}
+
+This chapter introduces the key technologies and concepts that form the foundation of this project: decentralized finance, the AAVE lending protocol, and modular smart accounts.
+
+\section{Decentralized Finance}
+
+Decentralized Finance, commonly known as DeFi, refers to financial services built on blockchain technology that operate without traditional intermediaries like banks or brokers. Instead of relying on centralized institutions, DeFi applications use smart contracts to automate financial operations, making them transparent, permissionless, and accessible to anyone with an internet connection.
+
+\subsection{Core concepts}
+
+Traditional finance relies on trusted intermediaries to facilitate transactions. When you deposit money in a bank, the bank holds your funds and decides how to use them. When you take out a loan, the bank evaluates your creditworthiness and sets the terms. DeFi replaces these intermediaries with code: smart contracts that execute automatically according to predefined rules.
+
+The key principles of DeFi include:
+
+\begin{itemize}
+    \item \textbf{Permissionless access}: Anyone can use DeFi services without needing approval from a central authority. There are no credit checks, identity verification, or geographic restrictions.
+    \item \textbf{Transparency}: All transactions and smart contract code are publicly visible on the blockchain. Users can verify exactly how protocols work and audit their security.
+    \item \textbf{Composability}: DeFi protocols can interact with each other, allowing developers to combine different services like building blocks. This is often called "money legos."
+    \item \textbf{Self-custody}: Users maintain control of their own assets through their private keys, rather than trusting a third party to hold their funds.
+\end{itemize}
+
+\subsection{Token standards}
+
+Tokens are digital assets that exist on a blockchain. On Ethereum, the most common token standard is \textbf{ERC-20}, which defines a common interface for fungible tokens. Fungible means that each token is identical and interchangeable with any other token of the same type, just like how one euro is equivalent to any other euro.
+
+The ERC-20 standard specifies functions that all compliant tokens must implement:
+
+\begin{itemize}
+    \item \texttt{balanceOf(address)}: Returns how many tokens an address owns.
+    \item \texttt{transfer(address, amount)}: Sends tokens to another address.
+    \item \texttt{approve(address, amount)}: Allows another address (typically a smart contract) to spend tokens on your behalf.
+    \item \texttt{transferFrom(from, to, amount)}: Transfers tokens from one address to another, used by approved spenders.
+\end{itemize}
+
+This standardization is crucial for DeFi because it allows protocols to work with any ERC-20 token without needing custom code for each one. A lending protocol can accept any ERC-20 token as collateral, and a decentralized exchange can trade any pair of ERC-20 tokens.
+
+\subsection{Lending and borrowing}
+
+One of the most fundamental DeFi services is lending and borrowing. In traditional finance, if you want to earn interest on your savings, you deposit money in a bank. If you need a loan, you apply to the bank and provide collateral or proof of income.
+
+DeFi lending protocols work differently. Users who want to earn interest deposit their tokens into a \textbf{liquidity pool}, a smart contract that holds funds from many different users. These pooled funds are then available for other users to borrow.
+
+Borrowers must provide \textbf{collateral} to take out a loan. Because DeFi is permissionless and pseudonymous, there is no way to enforce repayment through legal means. Instead, borrowers must lock up assets worth more than what they borrow---for example, depositing ETH or stablecoins like USDC as collateral to borrow a different token. If the value of their collateral drops below a certain threshold (the \textbf{liquidation threshold}), anyone can repay part of the loan and claim the collateral at a discount. This mechanism ensures that lenders are always protected, even if borrowers default.
+
+Interest rates in DeFi lending are typically determined algorithmically based on supply and demand. When there is high demand for borrowing a particular asset, interest rates increase to attract more lenders. When demand is low, rates decrease.
+
+\section{AAVE Protocol}
+
+AAVE is one of the largest and most widely used DeFi lending protocols \cite{aaveV3docs}. Originally launched as ETHLend in 2017, it was rebranded to AAVE (Finnish for "ghost") in 2020 with the release of AAVE V2. The protocol has since evolved to AAVE V3, which introduced new features for capital efficiency and risk management.
+
+\subsection{How AAVE works}
+
+AAVE operates as a system of liquidity pools, with one pool for each supported asset. Users interact with the protocol through a central \texttt{Pool} contract that manages all lending and borrowing operations.
+
+\textbf{Supplying assets}: When users supply assets to AAVE, they deposit tokens into the protocol and receive \textbf{aTokens} in return. These aTokens represent the user's share of the liquidity pool and automatically accrue interest over time. For example, if you supply 100 DAI, you receive 100 aDAI. As borrowers pay interest, the balance of aDAI in your wallet increases. When you want to withdraw, you redeem your aTokens for the underlying asset plus accumulated interest.
+
+\textbf{Borrowing assets}: To borrow from AAVE, users must first supply collateral. The amount they can borrow depends on the \textbf{Loan-to-Value (LTV)} ratio of their collateral. For example, if an asset has an LTV of 80\%, a user who supplies \$1000 worth of that asset can borrow up to \$800. AAVE supports two types of interest rates: \textbf{stable rates} that remain relatively constant, and \textbf{variable rates} that fluctuate based on market conditions.
+
+\textbf{Liquidations}: If a borrower's collateral value drops and their position becomes undercollateralized (meaning their debt exceeds the allowed threshold), liquidators can repay part of the debt and receive the collateral at a discount. This mechanism protects lenders and maintains the protocol's solvency.
+
+\subsection{AAVE V3 features}
+
+AAVE V3 introduced several improvements over previous versions:
+
+\begin{itemize}
+    \item \textbf{Efficiency Mode (E-Mode)}: Allows higher borrowing power when supplying and borrowing correlated assets, such as different stablecoins.
+    \item \textbf{Isolation Mode}: Limits exposure to riskier assets by capping how much can be borrowed against them.
+    \item \textbf{Portal}: Enables seamless transfer of liquidity between AAVE deployments on different networks.
+    \item \textbf{Gas optimizations}: Reduced transaction costs through more efficient smart contract design.
+\end{itemize}
+
+\subsection{AAVE smart contracts}
+
+The AAVE protocol consists of several key smart contracts:
+
+\begin{itemize}
+    \item \texttt{Pool}: The main entry point for users. Handles supply, borrow, repay, and withdraw operations.
+    \item \texttt{PoolAddressesProvider}: A registry that stores the addresses of all protocol contracts, making it easier to interact with the protocol.
+    \item \texttt{AToken}: The interest-bearing token that represents supplied assets.
+    \item \texttt{VariableDebtToken} and \texttt{StableDebtToken}: Tokens that represent borrowed amounts with variable or stable interest rates.
+    \item \texttt{Oracle}: Provides price feeds for assets, used to calculate collateral values and determine liquidations.
+\end{itemize}
+
+To interact with AAVE programmatically, external contracts call functions on the \texttt{Pool} contract. The most commonly used functions include:
+
+\begin{itemize}
+    \item \texttt{supply(asset, amount, onBehalfOf, referralCode)}: Deposits tokens into the protocol.
+    \item \texttt{borrow(asset, amount, interestRateMode, referralCode, onBehalfOf)}: Borrows tokens against supplied collateral.
+    \item \texttt{repay(asset, amount, interestRateMode, onBehalfOf)}: Repays borrowed tokens.
+    \item \texttt{withdraw(asset, amount, to)}: Withdraws supplied tokens from the protocol.
+\end{itemize}
+
+\section{Account Abstraction}
+
+Traditional Ethereum accounts, known as Externally Owned Accounts (EOAs), are controlled by private keys. Every transaction must be signed by the private key, and the account has limited functionality: it can only send transactions and hold assets. This creates several problems:
+
+\begin{itemize}
+    \item \textbf{Key management}: Losing a private key means losing access to all funds permanently.
+    \item \textbf{No recovery options}: There is no way to recover an EOA if the key is lost or compromised.
+    \item \textbf{Gas payment}: Users must always have ETH to pay for gas, even if they only want to interact with other tokens.
+    \item \textbf{Limited automation}: EOAs cannot execute transactions automatically or set complex conditions.
+\end{itemize}
+
+\textbf{Account Abstraction} addresses these limitations by replacing EOAs with smart contract accounts, often called \textbf{Smart Accounts}. These accounts are smart contracts that can implement custom logic for authentication, recovery, and transaction execution.
+
+\subsection{ERC-4337}
+
+ERC-4337 is a standard that brings account abstraction to Ethereum without requiring changes to the protocol itself \cite{erc4337}. It introduces a new transaction flow:
+
+\begin{enumerate}
+    \item Users create \textbf{UserOperations} instead of regular transactions. These describe what action the user wants to perform.
+    \item UserOperations are sent to a separate \textbf{mempool} (a waiting area for pending operations) rather than the regular transaction mempool.
+    \item \textbf{Bundlers} collect UserOperations and submit them to the blockchain as regular transactions.
+    \item A singleton contract called the \textbf{EntryPoint} processes the bundled operations and calls the target smart accounts.
+    \item Each smart account validates the operation according to its own rules and executes the requested action.
+\end{enumerate}
+
+This architecture enables features that were previously impossible:
+
+\begin{itemize}
+    \item \textbf{Custom authentication}: Smart accounts can use any validation logic, not just ECDSA signatures. This enables multi-signature wallets, social recovery, biometric authentication, and more.
+    \item \textbf{Sponsored transactions}: A third party (called a \textbf{Paymaster}) can pay for gas on behalf of users, enabling gasless transactions.
+    \item \textbf{Batched transactions}: Multiple operations can be combined into a single transaction, saving gas and improving user experience.
+\end{itemize}
+
+\subsection{ERC-7579: Modular Smart Accounts}
+
+While ERC-4337 defines how smart accounts interact with the network, it does not specify how accounts should be structured internally. Different wallet providers implemented their own architectures, leading to fragmentation in the ecosystem.
+
+\textbf{ERC-7579} addresses this by defining a standard interface for \textbf{modular smart accounts} \cite{erc7579}. Instead of building monolithic smart accounts with all features hardcoded, ERC-7579 enables accounts to install and uninstall modules that add specific functionality.
+
+The standard defines four types of modules:
+
+\begin{itemize}
+    \item \textbf{Validators}: Modules that verify whether an operation is authorized. They can implement different authentication schemes like ECDSA signatures, multi-sig, passkeys, or social recovery.
+    \item \textbf{Executors}: Modules that can trigger actions on behalf of the account. They enable automation, scheduled transactions, and integration with external protocols.
+    \item \textbf{Hooks}: Modules that run before and/or after execution. They can enforce policies, implement spending limits, or add additional security checks.
+    \item \textbf{Fallback handlers}: Modules that handle calls to functions not defined on the account itself, enabling extensibility.
+\end{itemize}
+
+Each module type has a specific interface it must implement. For example, all modules must implement:
+
+\begin{itemize}
+    \item \texttt{onInstall(bytes data)}: Called when the module is installed on an account.
+    \item \texttt{onUninstall(bytes data)}: Called when the module is removed from an account.
+    \item \texttt{isModuleType(uint256 typeID)}: Returns whether the module is of a specific type.
+\end{itemize}
+
+\subsection{Executor modules}
+
+Executor modules are particularly relevant for DeFi automation. They allow external contracts or accounts to trigger actions through the smart account, following predefined rules. Common use cases include:
+
+\begin{itemize}
+    \item \textbf{Automated DeFi strategies}: Executors can automatically rebalance positions, harvest yields, or manage liquidity based on market conditions.
+    \item \textbf{Scheduled transactions}: Recurring payments or periodic operations can be triggered by executors.
+    \item \textbf{Protocol integrations}: Executors can provide simplified interfaces for interacting with complex DeFi protocols.
+\end{itemize}
+
+An executor module can call the smart account's \texttt{execute} function to perform actions like token transfers, contract calls, or multi-step operations. The modular architecture ensures that these actions are performed with the account's permissions while maintaining security through the account's validation logic.
+
+This combination of account abstraction and modular architecture creates a powerful foundation for building sophisticated DeFi applications that can interact with protocols like AAVE in automated and user-friendly ways.

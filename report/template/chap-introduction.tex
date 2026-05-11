@@ -1,0 +1,94 @@
+\chapter{Introduction}
+\label{chap:introduction}
+This chapter some basics on blockchain concepts useful to understand this project. 
+
+\section{What is a blockchain?}
+A blockchain is an immutable ledger that enables the recording of transactions in a P2P network, providing a single source 
+of truth. The first one was invented by Satoshi Nakamoto in 2008 with the release of the Bitcoin whitepaper 
+\cite{nakamoto2008bitcoin}. It developed a fully peer-to-peer (P2P) network where users can exchange a 
+currency (bitcoin) without third party authorities with the power of rewriting the history of transactions. 
+
+A blockchain can be described as a system made of multiple components, the foundamentals are: 
+\begin{itemize}
+  \item a P2P network of nodes; 
+  \item a consensus algorithm;
+  \item a chain of blocks, containing the verified transactions.
+\end{itemize}
+
+There are many variants of blockchains, an important difference to consider to classify them is who can access the network. 
+In a \b{permissionless} blockchain (like Ethereum or Bitcoin) anybody can access, anyone can participate in the consensus; \b{permissioned} blockchains,
+on the other hand, restrict the access using a whitelist for trusted peers. 
+
+\subsection{Cryptography primitives}
+Blockchains rely heavily on cryptographic techniques to ensure security and trust. The main cryptographic tools used are:
+
+\textbf{Hash functions} are one-way mathematical functions that take any input and produce a fixed-size output (called a hash or digest). They are deterministic, meaning the same input always produces the same output. However, it is computationally impossible to reverse the process or find two different inputs that produce the same hash. Bitcoin and Ethereum use SHA-256 and Keccak-256 hash functions respectively.
+
+\textbf{Digital signatures} allow users to prove ownership of their assets and authorize transactions. Each user has a private key (which must be kept secret) and a public key (which can be shared). To send a transaction, a user signs it with their private key. Anyone can verify the signature using the user's public key, proving that the transaction was authorized by the owner of that private key. Most blockchains use elliptic curve cryptography for digital signatures.
+
+\subsection{How transactions work}
+When a user wants to make a transaction on a blockchain, they create a message containing the details (such as the recipient and amount) and sign it with their private key. This signed transaction is then broadcast to the P2P network.
+
+Nodes in the network collect these transactions and group them into blocks. Before a block can be added to the blockchain, it must be validated through the consensus mechanism. Once consensus is reached, the block is added to the chain, and all nodes update their copy of the ledger. This process ensures that all participants have the same view of transaction history.
+
+The chain structure is maintained by including the hash of the previous block in each new block. This creates a tamper-proof link: if someone tries to modify an old transaction, it would change that block's hash, breaking the link to all subsequent blocks. This is why blockchains are described as immutable.
+
+\subsection{Consensus mechanisms}
+The consensus mechanism is how the network agrees on which transactions are valid and the order in which they should be recorded. This is a critical challenge in distributed systems, where nodes might be unreliable or malicious \cite{antonopoulos2018mastering}.
+
+\subsubsection{Proof of Work}
+Bitcoin introduced \textbf{Proof of Work} (PoW), where nodes (called miners) compete to solve complex mathematical puzzles. Specifically, miners must find a nonce value that, when combined with the block data and hashed, produces a hash below a certain target threshold. This requires repeated trial and error, making it computationally intensive. The difficulty of the puzzle is adjusted periodically to maintain a consistent block time—approximately 10 minutes per block in Bitcoin, while Ethereum (before its transition to Proof of Stake) targeted roughly 12-15 seconds per block.
+
+The first miner to solve the puzzle gets to add the next block and receives a reward in the form of newly minted cryptocurrency plus transaction fees. This process requires significant computational power and electricity, making it expensive to attack the network. An attacker would need to control more than 50\% of the network's total computational power to reliably manipulate the blockchain.
+
+PoW provides strong security through this computational cost, making attacks economically infeasible. It has a proven track record, securing Bitcoin since 2009, and remains permissionless—anyone with computational resources can participate. However, PoW suffers from significant drawbacks. The computational work requires massive amounts of electricity, leading to environmental concerns. Mining also tends to concentrate in areas with cheap electricity, creating centralization risks. Furthermore, the need for specialized hardware (ASICs) creates barriers to entry for individual participants.
+
+\subsubsection{Proof of Stake}
+\textbf{Proof of Stake} (PoS) was developed as an alternative to address PoW's high energy consumption. Instead of computational work, PoS selects validators based on the amount of cryptocurrency they have locked up as collateral (their "stake"). Validators are chosen to propose and validate blocks based on factors such as the size of their stake and how long they've been staking. When selected, a validator creates a new block and other validators attest to its validity. Validators who act dishonestly risk losing their stake through a process called "slashing," creating an economic incentive for honest behavior.
+
+The fundamental differences between PoW and PoS reflect different security models. PoS requires capital (staked tokens) rather than computational power, making it dramatically more energy efficient—consuming only a fraction of the energy compared to PoW. The attack model also differs: in PoS, attacking the network requires acquiring and risking a significant stake, whereas PoW requires controlling computational resources. Block production is deterministic in PoS, with validators selected according to protocol rules, rather than the competitive race to solve puzzles characteristic of PoW.
+
+PoS offers several advantages, particularly its minimal computational requirements, which eliminate the need for specialized hardware and lower barriers to entry. The economic security model creates strong disincentives for attacks, as malicious behavior results in financial penalties. However, PoS faces its own challenges. The "nothing at stake" problem suggests that validators could theoretically validate multiple competing chains without cost. There are also concerns about wealth concentration, as those with more tokens have more influence over the network. Finally, PoS is newer and less battle-tested than PoW, having less operational history in securing high-value networks.
+
+\section{Ethereum and smart contracts}
+While Bitcoin was designed primarily as a digital currency, Ethereum extended the blockchain concept to support general-purpose computation \cite{antonopoulos2018mastering}. Launched in 2015 by Vitalik Buterin and others, Ethereum introduced \textbf{smart contracts}: programs deployed to the blockchain that execute when invoked by a transaction. A smart contract's code is stored on-chain and cannot be altered after deployment. It does not run by itself---it only executes when a user or another contract sends a transaction that calls one of its functions. Every node in the network then runs the same code with the same inputs and reaches the same result, which is what makes the execution trustless.
+
+\subsection{Ethereum consensus mechanism}
+Ethereum initially used Proof of Work with the Ethash algorithm, which was designed to be ASIC-resistant and more memory-intensive than Bitcoin's SHA-256. However, the Ethereum community recognized the limitations of PoW, particularly its energy consumption and scalability constraints.
+
+In September 2022, Ethereum underwent one of the most significant upgrades in blockchain history, known as \textbf{The Merge}. This event transitioned Ethereum from Proof of Work to Proof of Stake, implementing a consensus mechanism called \textbf{Gasper}, which combines the Casper FFG (Friendly Finality Gadget) and LMD GHOST (Latest Message Driven Greediest Heaviest Observed SubTree) protocols.
+
+In Ethereum's PoS system, validators must stake 32 ETH to participate in block production and validation. These validators are randomly selected to propose blocks in assigned time slots every 12 seconds, while other validators attest to the validity of proposed blocks. Validators earn rewards for honest participation and face penalties (slashing) for malicious behavior. Finality is achieved through a checkpoint system, where blocks become irreversible after being finalized. This transition reduced Ethereum's energy consumption by approximately 99.95\% while maintaining security and enabling future scalability improvements.
+
+\subsection{Smart contracts and the EVM}
+A smart contract is a program written in a high-level language (such as Solidity or Vyper) and deployed to the blockchain. Once deployed, the contract's code cannot be changed. Correct execution is ensured by redundancy: when a transaction calls a contract, every node in the network independently executes the same bytecode with the same inputs using a deterministic virtual machine. If a node produces a different result, the other nodes reject it through the consensus mechanism. No single node can alter the outcome, because the majority of the network must agree on the final state. This guarantee---immutable code plus redundant deterministic execution---is what enables trustless decentralized applications (DApps) that operate without central control.
+
+Smart contracts are executed by the \textbf{Ethereum Virtual Machine} (EVM), a quasi-Turing-complete computational environment that runs on every node in the network. The EVM is a stack-based virtual machine with a word size of 256 bits, designed to execute bytecode compiled from high-level smart contract languages. When a transaction calls a smart contract, every node executes the same code and updates their state accordingly, ensuring that all nodes maintain consensus on the state of all accounts and contracts.
+
+The EVM maintains several types of state: \textbf{account state} (balances and nonces for externally owned accounts), \textbf{contract state} (storage, code, and account balance for smart contracts), and \textbf{transaction state} (temporary data during transaction execution).
+
+\subsection{Opcodes}
+At the lowest level, the EVM executes \textbf{opcodes}: simple operations that form the instruction set of the virtual machine. Smart contract bytecode consists of a sequence of these opcodes, each performing a specific operation. The EVM instruction set includes arithmetic operations (ADD, SUB, MUL, DIV, MOD), comparison operations (LT, GT, EQ, ISZERO), bitwise operations (AND, OR, XOR, NOT, BYTE), and stack operations (PUSH, POP, DUP, SWAP). Memory and storage are manipulated through dedicated opcodes—MLOAD and MSTORE for temporary memory, while SLOAD and SSTORE handle persistent contract storage. Control flow is managed by jump instructions (JUMP, JUMPI, JUMPDEST), and the EVM provides access to blockchain context through opcodes like ADDRESS, BALANCE, CALLER, CALLVALUE, TIMESTAMP, and NUMBER. Finally, execution opcodes like CALL, DELEGATECALL, STATICCALL, CREATE, and SELFDESTRUCT enable contract interaction and deployment.
+
+Each opcode has an associated gas cost that reflects its computational complexity and resource usage. For example, simple arithmetic operations cost 3 gas, while writing to storage (SSTORE) costs significantly more (20,000 gas for setting a new value) because it requires updating the permanent blockchain state.
+
+\subsection{Gas mechanism}
+To prevent infinite loops and abuse, Ethereum uses a concept called \textbf{gas}. Gas serves multiple critical purposes in the Ethereum ecosystem. First, it provides \textbf{resource metering}, ensuring every computation on the EVM costs a certain amount of gas proportional to the computational resources required. This metering prevents denial-of-service attacks by requiring payment for computation, making it economically infeasible for attackers to overwhelm the network with expensive operations. Gas also serves as \textbf{validator compensation}—users pay for the gas their transactions consume, compensating validators for processing transactions and storing state. Finally, gas creates a \textbf{priority mechanism} where users can offer higher gas prices to incentivize validators to include their transactions faster.
+
+The gas system operates through a straightforward model. Each operation has a fixed \textbf{gas cost} measured in gas units. Users specify a \textbf{gas limit} (the maximum gas they're willing to consume) and a \textbf{gas price} or max fee (the amount of ETH they'll pay per unit of gas). The total transaction cost equals gas used multiplied by gas price. If a transaction runs out of gas before completing, it reverts, but the gas spent up to that point is still consumed as compensation for the computational work performed. Unused gas is refunded to the sender.
+
+Since the London hard fork (EIP-1559), Ethereum uses a more sophisticated fee market with a \textbf{base fee} that is automatically adjusted based on network congestion and burned (removed from circulation), plus an optional \textbf{priority fee} (tip) that goes to validators. This creates more predictable transaction fees and introduces a deflationary mechanism for ETH.
+
+Different types of operations have vastly different gas costs reflecting their resource requirements. Simple arithmetic operations cost only 3-5 gas, while SHA3 hashing requires 30 gas plus 6 gas per word. Storage operations are particularly expensive: reading from storage (SLOAD) costs 2,100 gas, while writing to storage (SSTORE) costs 20,000 gas for setting a new value or 5,000 gas for modifying an existing one. Contract creation requires 32,000 gas plus the deployment cost, and every transaction has a base cost of 21,000 gas. This pricing structure incentivizes developers to write efficient code and minimize on-chain storage usage, as storage operations are among the most expensive.
+
+\subsection{Decentralized applications}
+Smart contracts enable a wide range of applications beyond simple payments. Some examples include:
+
+\begin{itemize}
+  \item \textbf{Decentralized Finance (DeFi)}: Financial services like lending, borrowing, and trading without traditional intermediaries.
+  \item \textbf{Non-Fungible Tokens (NFTs)}: Unique digital assets that represent ownership of items like art, collectibles, or real-world assets.
+  \item \textbf{Decentralized Autonomous Organizations (DAOs)}: Organizations governed by smart contracts where decisions are made through voting by token holders.
+  \item \textbf{Supply chain tracking}: Recording the movement of goods through a supply chain with transparency and immutability.
+\end{itemize}
+
+The key advantage of these applications is that they inherit the blockchain's properties: they are transparent, censorship-resistant, and don't require trust in a central authority. However, they also face challenges such as scalability, high transaction costs, and the irreversibility of bugs in smart contract code.

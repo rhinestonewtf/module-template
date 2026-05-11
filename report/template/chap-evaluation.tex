@@ -1,0 +1,278 @@
+\chapter{Evaluation}
+\label{chap:evaluation}
+
+This chapter evaluates the executor module from a quantitative angle. The most
+direct way to compare an ERC-7579 module against the way users currently
+interact with AAVE is to measure gas: how much does a typical workflow cost
+when issued through the module, and how does that compare with sending the
+equivalent transactions from a regular externally owned account (EOA)? Rather
+than building a dashboard that wraps the module in a user interface, I focus
+on the cost of the underlying on-chain operations, because that cost is the
+same regardless of which front-end is later layered on top.
+
+The chapter first describes the methodology used to obtain the gas numbers,
+then presents the results across four representative workflows. It compares
+three configurations: an EOA calling AAVE directly, an ERC-7579 smart account
+issuing the same calls as a native batched UserOperation, and the same smart
+account issuing the workflow through my executor module. The chapter closes
+with a comparison against related solutions in the AAVE tooling ecosystem and
+a discussion of the limitations of the measurement.
+
+\section{Methodology}
+
+All measurements were produced by a Foundry test contract (\texttt{test/Gas.t.sol})
+running against an Ethereum mainnet fork pinned at block 18,000,000. The fork
+block, EVM version (Cancun) and RPC endpoint are fixed in \texttt{foundry.toml}
+so the numbers are reproducible by re-running \texttt{forge test
+--match-contract GasTest -vv}. The compiler is run without optimizer overrides
+so the executor module is measured exactly as it is shipped in \texttt{src/}.
+
+\subsection{What is measured}
+
+For each workflow I record the total gas the user is responsible for paying.
+This includes the intrinsic transaction cost of 21{,}000 gas per on-chain
+transaction. The execution work (storage writes, oracle reads, AAVE bookkeeping)
+is the same in all three configurations; the cost difference comes from how
+many transactions are needed and from the overhead introduced by the
+ERC-4337 EntryPoint when a smart account is involved.
+
+For the EOA configuration, each AAVE interaction is a separate transaction. I
+measure the pure execution gas of the calls with \texttt{gasleft()} snapshots
+and then add 21{,}000 for each transaction the user would have to broadcast.
+For the two smart account configurations, the entire workflow is bundled into a
+single UserOperation routed through the EntryPoint via
+\texttt{handleOps}, and the bundler transaction itself pays the 21{,}000
+intrinsic cost once.
+
+\subsection{Three configurations}
+
+\textbf{EOA.} The user calls AAVE directly. Supplying requires two transactions
+(\texttt{approve} followed by \texttt{Pool.supply}); borrowing requires one
+transaction; repaying requires another approval plus a \texttt{Pool.repay}
+transaction; withdrawing is a single transaction. This is the baseline that
+every comparison against AAVE-tooling gas costs must use, because it is the
+path most users take today.
+
+\textbf{Native ERC-7579 batch.} The user owns an ERC-7579 smart account but
+does \emph{not} install any application-specific module. They batch the same
+raw approve and Pool calls into one UserOperation using the account's native
+batched execution mode. This configuration isolates the cost of the account
+abstraction framework itself, separate from any cost that my module adds on
+top.
+
+\textbf{Smart account with the executor module.} The same smart account,
+with the executor module from \texttt{src/ExecutorTemplate.sol} installed.
+Each user-level action (supply, borrow, repay, withdraw) is encoded as a
+single \texttt{executor.execute} call, and multi-action workflows are bundled
+as a batch of executor calls in one UserOperation. The module performs the
+necessary approvals internally, so the user's calldata only carries the
+high-level intent rather than the raw token-approval sequence.
+
+\subsection{Workflows}
+
+Four workflows of increasing length are measured:
+
+\begin{enumerate}
+    \item \textbf{Supply} — supply 10{,}000 USDC to the AAVE pool. The EOA
+    path needs two transactions because USDC must first be approved.
+    \item \textbf{Supply + borrow} — supply collateral, then borrow 0.5 WETH
+    against it.
+    \item \textbf{Supply + borrow + repay} — the above, followed by an
+    approval of WETH and a repayment of the same 0.5 WETH.
+    \item \textbf{Full cycle} — supply, borrow, repay, then withdraw half of
+    the original collateral.
+\end{enumerate}
+
+These cover the full lifecycle implemented in the module and let me observe
+how each configuration scales as more actions are added.
+
+\section{Results}
+
+Table~\ref{tab:gas-results} reports the total gas cost of each workflow under
+each configuration. All numbers are in raw gas units; the bundler base fee is
+already included for the smart account paths and the per-transaction base fee
+is already included for the EOA path.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrr}
+\hline
+\textbf{Workflow} & \textbf{EOA} & \textbf{Native 7579} & \textbf{Module} \\
+\hline
+Supply                       &   251{,}824 &   502{,}911 &   525{,}475 \\
+Supply + borrow              &   510{,}996 &   760{,}165 &   798{,}728 \\
+Supply + borrow + repay      &   629{,}701 &   866{,}148 &   921{,}805 \\
+Full cycle (supply, borrow, repay, withdraw) &   715{,}477 &   952{,}055 & 1{,}020{,}512 \\
+\hline
+\end{tabular}
+\caption{Total gas cost per workflow, in gas units. EOA assumes one
+transaction per AAVE interaction; smart account configurations bundle the
+full workflow into a single UserOperation.}
+\label{tab:gas-results}
+\end{table}
+
+\subsection{Smart account overhead is roughly constant}
+
+The gap between the EOA and the smart account paths sits in a narrow band:
+274{,}000 gas for the shortest workflow, 305{,}000 for the longest. This is
+the overhead of running the same work through ERC-4337 rather than through a
+plain transaction: signature validation, nonce checks, EntryPoint accounting
+and the indirection between the EntryPoint, the account and the executor.
+Because this overhead is paid once per UserOperation, it is amortised across
+however many actions the workflow contains.
+
+The break-even point follows directly from this. Each EOA transaction adds
+21{,}000 gas in intrinsic cost. The smart account adds roughly 250{,}000 gas
+in framework overhead. A workflow would need to contain more than
+$\lceil 250{,}000 / 21{,}000 \rceil = 12$ transactions before the smart
+account becomes cheaper than the EOA. None of the four AAVE workflows I
+tested approach that threshold, and most realistic AAVE interactions a user
+would issue in practice do not either.
+
+\subsection{The module costs slightly more than a raw 7579 batch}
+
+Comparing the third column with the second isolates the cost of the executor
+module specifically. The module adds between 22{,}500 gas (single supply) and
+68{,}500 gas (full cycle). This overhead comes from the additional contract
+hop introduced by \texttt{executor.execute}: the account calls into the
+module, the module decodes its action enum, and the module then calls back
+into the account using \texttt{\_execute} to perform each underlying step.
+Each round trip and each ABI decoding adds a small but measurable cost.
+
+The cost is not material on a per-workflow basis -- under five percent for
+the shortest workflow, under eight percent for the longest. What the user
+gets in exchange is a smaller and safer surface to interact with: a single
+function with a typed action enum, a pool address and asset addresses fixed
+at install time, and approvals issued automatically rather than left for the
+user to manage. Whether that trade-off is worth paying for is a UX question,
+not a gas question.
+
+\subsection{The smart account path is not a gas-saving optimisation}
+
+The most important finding is that, for the workflows I measured, none of
+the smart account configurations are cheaper than the corresponding EOA
+workflow. This contradicts a common framing of account abstraction as a way
+to reduce on-chain costs by batching. Batching does eliminate
+per-transaction base fees, but only after enough operations have been
+batched to outweigh the fixed UserOperation overhead. For a single
+deposit-and-borrow that threshold is far out of reach.
+
+The honest framing of this chapter, and of the project as a whole, is
+therefore that the module is not justified by gas. It is justified by the
+features that account abstraction enables and that the module exposes
+cleanly to those features: paymaster sponsorship so a user can interact with
+AAVE without holding ETH for fees, session keys so a delegated agent can
+execute pre-approved AAVE actions on the user's behalf, and a typed action
+interface that downstream tooling (validators, hooks, dashboards) can reason
+about without parsing raw approve and Pool calldata.
+
+\section{Comparison with other AAVE-tooling solutions}
+
+The executor module is one of several patterns developed to make interacting
+with AAVE more convenient than issuing raw transactions. This section places
+it in context against three families of existing solutions. None of these
+are benchmarked here in gas: they each rely on different account models and
+deployment assumptions, and a fair head-to-head benchmark would require
+re-deploying each of them at the same fork block. The comparison here is
+qualitative.
+
+\subsection{DeFi Saver and similar dashboards}
+
+DeFi Saver and other dashboards built on top of AAVE do not change the
+account model. The user still signs ordinary EOA transactions; the dashboard
+simply assembles convenient routes (for example, leveraged-position
+construction, automated liquidation protection) and prompts the user to
+approve them. The result is excellent UX for a single user but still
+requires multiple transactions and multiple signatures for any non-trivial
+flow, and it does not give a third party the ability to act on the user's
+behalf.
+
+\subsection{Instadapp DSA}
+
+Instadapp's Decentralised Smart Account (DSA) is closer in spirit to my
+module: it deploys a smart contract per user that owns positions across
+several DeFi protocols and exposes ``connector'' contracts which encapsulate
+protocol-specific logic. A user can ask the DSA to execute a sequence of
+connector calls in a single transaction. The architectural overlap with
+ERC-7579 is significant -- both are smart-account-with-modules designs --
+but the DSA predates the ERC-4337 ecosystem, lives behind a custom
+permissioning model, and is not interoperable with bundlers or paymasters.
+The trade-off the DSA makes is the opposite of what my module makes: it
+gives up framework portability in exchange for being a self-contained
+ecosystem.
+
+\subsection{Safe modules}
+
+Safe (formerly Gnosis Safe) is the most widely deployed smart-account
+implementation, and modules can be installed on a Safe to extend its
+behaviour. AAVE-specific Safe modules exist in the wild and are conceptually
+similar to my executor: they receive a typed instruction and translate it
+into the underlying approve and Pool calls. The difference is the framework.
+Safe is not natively an ERC-4337 account and does not implement
+ERC-7579's standardised module interface. A module written for Safe is not
+portable to other accounts, whereas the module presented here implements
+\texttt{ERC7579ExecutorBase} and runs unchanged on any ERC-7579-conforming
+account (Kernel, Nexus, Safe7579, and so on). The portability is the main
+contribution of building on top of ERC-7579 rather than on top of any single
+smart-account implementation.
+
+\section{Limitations}
+
+The numbers reported in this chapter should be read with the following
+caveats in mind.
+
+\textbf{Single fork block.} All measurements were taken at block 18,000,000.
+Gas costs for AAVE interactions can shift between blocks because of cold
+versus warm storage access and because AAVE upgrades can change the
+underlying logic. A campaign across many recent blocks would give a more
+robust picture but would not change the qualitative shape of the comparison.
+
+\textbf{Calldata cost.} The 21{,}000 base fee added to each EOA transaction
+captures the intrinsic cost but not the per-byte calldata cost (4 gas per
+zero byte, 16 gas per non-zero byte). For \texttt{approve} and the AAVE Pool
+functions this adds roughly one to two thousand gas per transaction. The
+EOA numbers in Table~\ref{tab:gas-results} are therefore a slight
+under-count. Including calldata gas would make the EOA path marginally more
+expensive but would not affect the overall conclusion.
+
+\textbf{Bundler economics.} The smart account numbers report the gas the
+EntryPoint charges. A real bundler typically marks up that figure with a
+priority premium and a paymaster surcharge if one is in use. These mark-ups
+are off-chain commercial choices and would not appear in any on-chain
+benchmark.
+
+\textbf{No paymaster, no session keys.} The benchmark exercises only the
+plain user-signs-the-userOp path. The features that justify the smart
+account approach -- gasless onboarding via paymasters, delegated signing
+via session keys -- are not measured here because they shift the cost
+question from ``how much gas?'' to ``who pays the gas, and what does the
+user have to hold?''. That question is answered qualitatively in the
+preceding section.
+
+\textbf{Module configuration.} The executor stores the pool address and two
+asset addresses at install time. The cost of installing the module is paid
+once per smart account and is not amortised in the per-workflow numbers
+above. For the test fixture, the install cost is roughly 25{,}700 gas
+(from the \texttt{testOnInstall} measurement in
+\texttt{test/ExecutorTemplate.t.sol}).
+
+\section{Discussion}
+
+The evaluation supports a single, honest conclusion: ERC-7579 plus an
+application-specific executor module is not the right tool for users whose
+goal is the lowest possible gas bill on a one-shot AAVE interaction. The
+EOA path remains the cheapest way to issue any short workflow against AAVE
+and is likely to remain so until the framework cost of an ERC-4337
+UserOperation drops by an order of magnitude.
+
+The tool is, however, the right shape for a different goal: giving users
+and the agents that act on their behalf a single, typed handle on AAVE that
+plays well with the rest of the account-abstraction stack. The module
+offers a stable interface (\texttt{execute(action, ...)}), encapsulates the
+correctness-critical sequencing of approve and Pool calls, and inherits all
+of the properties of the surrounding ERC-7579 ecosystem -- programmable
+validators, hooks, session keys, and paymasters -- without writing a single
+custom line for any of them. The 5--8\% overhead the module adds on top of
+a raw batch is a fair price for that surface, and the 30--40\% overhead
+the smart account path adds on top of the EOA path is the price one pays
+for the features themselves, not for the module.

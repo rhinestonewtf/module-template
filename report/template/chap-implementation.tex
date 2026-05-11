@@ -1,0 +1,420 @@
+\chapter{Implementation}
+\label{chap:implementation}
+
+This chapter describes the implementation of the AAVE executor module, covering the supply, withdraw, borrow, and repay flows. I explain how these operations work in the AAVE protocol, how my executor module wraps them for use with ERC-7579 smart accounts, and how I test the implementation against a mainnet fork. For the borrow flow, I also introduce key DeFi concepts such as Loan-to-Value ratio, health factor, and interest accrual. The repay flow closes the borrowing lifecycle by allowing a smart account to pay back debt and restore its position's health.
+
+\section{Supply Flow}
+
+\subsection{AAVE supply mechanism}
+
+When a user wants to supply assets to AAVE, the protocol requires two steps. First, the user must approve the Pool contract to spend their tokens. This is a standard ERC-20 approval that grants the Pool permission to transfer tokens on behalf of the user. Second, the user calls the \texttt{supply} function on the Pool contract.
+
+The Pool contract's supply function has the following signature:
+
+\begin{lstlisting}[language=Java,caption={AAVE Pool supply function},label=lst:pool-supply]
+function supply(
+    address asset,
+    uint256 amount,
+    address onBehalfOf,
+    uint16 referralCode
+) external;
+\end{lstlisting}
+
+The \texttt{asset} parameter specifies which token to supply, \texttt{amount} is how much to deposit, \texttt{onBehalfOf} determines who receives the aTokens (allowing one address to supply on behalf of another), and \texttt{referralCode} is used for referral tracking (typically set to 0).
+
+When supply succeeds, AAVE transfers the specified amount of tokens from the caller to the Pool and mints an equivalent amount of aTokens to the \texttt{onBehalfOf} address. These aTokens represent the user's share of the liquidity pool and automatically accrue interest over time.
+
+\subsection{Executor module supply implementation}
+
+My executor module wraps this two-step process into a single execution flow. When the smart account calls the \texttt{execute} function with the SUPPLY action, the module performs both the approval and the supply call on behalf of the account.
+
+\begin{lstlisting}[language=Java,caption={Supply implementation in the executor},label=lst:executor-supply]
+if (action == SmartAAVE.ActionAAVE.SUPPLY) {
+    _execute(asset0, 0, abi.encodeCall(IERC20.approve, (pool, amount)));
+    _execute(
+        pool,
+        0,
+        abi.encodeCall(IPool.supply, (asset0, amount, onBehalfOf, 0))
+    );
+}
+\end{lstlisting}
+
+The \texttt{\_execute} function is inherited from \texttt{ERC7579ExecutorBase} and allows the executor module to make calls through the smart account. Each \texttt{\_execute} call causes the smart account itself to perform the specified action. This means the approval is granted from the smart account's address to the Pool, and the supply call originates from the smart account.
+
+The first \texttt{\_execute} call approves the Pool contract to spend the specified amount of \texttt{asset0} (configured during module installation). The second call invokes \texttt{pool.supply()}, transferring tokens from the smart account to AAVE and minting aTokens back to the \texttt{onBehalfOf} address.
+
+\section{Withdraw Flow}
+
+\subsection{AAVE withdraw mechanism}
+
+Withdrawing from AAVE is simpler than supplying because no approval is needed. The user holds aTokens, and the Pool contract can burn them directly when processing a withdrawal. The withdraw function signature is:
+
+\begin{lstlisting}[language=Java,caption={AAVE Pool withdraw function},label=lst:pool-withdraw]
+function withdraw(
+    address asset,
+    uint256 amount,
+    address to
+) external;
+\end{lstlisting}
+
+The \texttt{asset} parameter specifies which underlying token to withdraw, \texttt{amount} is how much to withdraw (or \texttt{type(uint256).max} to withdraw everything), and \texttt{to} is the address that receives the withdrawn tokens. When withdraw executes, AAVE burns the corresponding aTokens from the caller and transfers the underlying asset to the \texttt{to} address.
+
+Because aTokens accrue interest continuously, the amount withdrawn can exceed the original amount supplied. The interest earned depends on the utilization rate of the pool and the time elapsed since the supply.
+
+\subsection{Executor module withdraw implementation}
+
+The withdraw implementation in my executor is straightforward since only one call is needed:
+
+\begin{lstlisting}[language=Java,caption={Withdraw implementation in the executor},label=lst:executor-withdraw]
+if (action == SmartAAVE.ActionAAVE.WITHDRAW) {
+    _execute(
+        pool,
+        0,
+        abi.encodeCall(IPool.withdraw, (asset0, amount, onBehalfOf))
+    );
+}
+\end{lstlisting}
+
+The \texttt{\_execute} call makes the smart account invoke \texttt{pool.withdraw()}, which burns the account's aTokens and sends the underlying tokens to the specified recipient. In my implementation, I use \texttt{onBehalfOf} as the recipient, allowing the smart account to withdraw funds either to itself or to another address.
+
+\section{Borrow Flow}
+
+Borrowing is one of the core features of AAVE that enables users to leverage their supplied assets. Unlike simply supplying tokens to earn yield, borrowing introduces additional concepts and risks that users must understand.
+
+\subsection{Key concepts}
+
+Before diving into the implementation, I explain three fundamental concepts that govern borrowing in AAVE: Loan-to-Value ratio, health factor, and interest accrual.
+
+\subsubsection{Loan-to-Value (LTV)}
+
+The Loan-to-Value ratio represents the maximum amount a user can borrow against their collateral, expressed as a percentage. For example, if USDC has an LTV of 77\%, a user who deposits \$10,000 worth of USDC can borrow up to \$7,700 worth of other assets.
+
+The formula for LTV is:
+
+\begin{equation}
+\text{LTV} = \frac{\text{Borrowed Value}}{\text{Collateral Value}} \times 100
+\end{equation}
+
+Each asset in AAVE has its own maximum LTV parameter, which reflects the protocol's assessment of that asset's risk profile. Stablecoins like USDC typically have higher LTV ratios (around 77\%) because their prices are relatively stable, while more volatile assets have lower LTV ratios.
+
+\subsubsection{Health factor}
+
+The health factor is AAVE's primary metric for measuring how safe a borrowing position is from liquidation. It is calculated as:
+
+\begin{equation}
+\text{Health Factor} = \frac{\text{Collateral Value} \times \text{Liquidation Threshold}}{\text{Total Debt}}
+\end{equation}
+
+The liquidation threshold is a percentage (slightly higher than the maximum LTV) at which a position becomes eligible for liquidation. For USDC, this is typically around 80\%.
+
+The health factor indicates the position's safety:
+\begin{itemize}
+    \item \textbf{Health Factor $>$ 1}: The position is safe and cannot be liquidated
+    \item \textbf{Health Factor $=$ 1}: The position is at the liquidation threshold
+    \item \textbf{Health Factor $<$ 1}: The position is underwater and can be liquidated by anyone
+\end{itemize}
+
+Several factors can cause the health factor to decrease: the collateral asset's price dropping, the borrowed asset's price rising, or interest accruing on the debt over time.
+
+\subsubsection{Interest accrual}
+
+When users borrow from AAVE, they pay interest on their debt. AAVE uses a variable interest rate model where the rate depends on the pool's utilization---the higher the percentage of the pool that is borrowed, the higher the interest rate. This mechanism incentivizes liquidity provision when demand for borrowing is high.
+
+Interest compounds continuously, meaning the debt grows over time even if the user takes no action. AAVE tracks this efficiently using a ``borrow index'' that increases over time. A user's actual debt is calculated as their scaled debt balance multiplied by the current borrow index.
+
+This continuous interest accrual means that even if asset prices remain stable, a borrower's health factor will slowly decrease over time as their debt grows relative to their collateral.
+
+\subsection{AAVE borrow mechanism}
+
+To borrow from AAVE, a user must first have supplied collateral. The borrow function signature is:
+
+\begin{lstlisting}[language=Java,caption={AAVE Pool borrow function},label=lst:pool-borrow]
+function borrow(
+    address asset,
+    uint256 amount,
+    uint256 interestRateMode,
+    uint16 referralCode,
+    address onBehalfOf
+) external;
+\end{lstlisting}
+
+The \texttt{asset} parameter specifies which token to borrow, \texttt{amount} is how much to borrow, \texttt{interestRateMode} selects between stable (1) or variable (2) interest rates, \texttt{referralCode} is for referral tracking, and \texttt{onBehalfOf} specifies who receives the borrowed tokens and assumes the debt.
+
+When borrow executes, AAVE checks that the user has sufficient collateral to support the new debt while maintaining a healthy position. If the check passes, AAVE mints variable debt tokens to track the user's obligation and transfers the borrowed asset to the specified address.
+
+\subsection{Executor module borrow implementation}
+
+My executor module implements the borrow action to allow smart accounts to borrow assets from AAVE:
+
+\begin{lstlisting}[language=Java,caption={Borrow implementation in the executor},label=lst:executor-borrow]
+if (action == SmartAAVE.ActionAAVE.BORROW) {
+    _execute(
+        pool,
+        0,
+        abi.encodeCall(IPool.borrow, (asset, amount, 2, 0, onBehalfOf))
+    );
+}
+\end{lstlisting}
+
+The implementation uses variable interest rate mode (2) as this is the most common choice in practice. The \texttt{\_execute} call makes the smart account invoke \texttt{pool.borrow()}, which transfers the borrowed tokens to the \texttt{onBehalfOf} address after verifying the account has sufficient collateral.
+
+To query a position's health status, I also expose the Pool's \texttt{getUserAccountData} function through the interface:
+
+\begin{lstlisting}[language=Java,caption={Getting user account data},label=lst:get-account-data]
+function getUserAccountData(address user)
+    external
+    view
+    returns (
+        uint256 totalCollateralBase,
+        uint256 totalDebtBase,
+        uint256 availableBorrowsBase,
+        uint256 currentLiquidationThreshold,
+        uint256 ltv,
+        uint256 healthFactor
+    );
+\end{lstlisting}
+
+This function returns all relevant metrics for monitoring a borrowing position, including the current LTV, liquidation threshold, and health factor.
+
+\section{Repay Flow}
+
+Repaying closes the borrowing lifecycle. Once a user has borrowed assets from AAVE, they accumulate debt that grows over time due to interest accrual. Repaying reduces or eliminates that debt, restoring the position's health factor and eventually freeing the collateral for withdrawal.
+
+\subsection{Key concepts}
+
+\subsubsection{Debt tokens}
+
+When a user borrows from AAVE, the protocol mints \textit{variable debt tokens} to the borrower's address. These tokens represent the outstanding obligation and automatically rebase upward as interest accrues. Repaying burns these debt tokens proportionally to the amount repaid. A full repayment burns all debt tokens and removes the borrowing position entirely.
+
+\subsubsection{Partial versus full repayment}
+
+AAVE supports both partial and full repayment. A partial repayment reduces the outstanding debt and raises the health factor without closing the position. A full repayment eliminates all debt for the specified asset.
+
+Because interest accrues continuously, the exact amount owed at repayment time can be slightly larger than the amount originally borrowed. To avoid leaving dust debt, AAVE accepts \texttt{type(uint256).max} as the amount, which instructs the protocol to repay the entire outstanding balance regardless of the exact figure. In my implementation I pass the explicit amount rather than the max sentinel, which is appropriate for the educational context of this module.
+
+\subsubsection{Repayment and collateral}
+
+Repaying does not automatically return collateral. After repaying the debt, the user must separately call withdraw to reclaim the supplied assets. The two operations are intentionally decoupled in AAVE, which gives users flexibility to maintain a partial collateral position even after repaying.
+
+\subsection{AAVE repay mechanism}
+
+Like supply, repaying requires a prior ERC-20 approval because the Pool contract must pull the repayment tokens from the caller. The repay function signature is:
+
+\begin{lstlisting}[language=Java,caption={AAVE Pool repay function},label=lst:pool-repay]
+function repay(
+    address asset,
+    uint256 amount,
+    uint256 interestRateMode,
+    address onBehalfOf
+) external returns (uint256);
+\end{lstlisting}
+
+The \texttt{asset} parameter specifies which borrowed token to repay, \texttt{amount} is how much debt to clear, \texttt{interestRateMode} must match the mode used when borrowing (variable rate is 2), and \texttt{onBehalfOf} identifies whose debt is being repaid. The function returns the actual amount repaid, which may differ from the requested amount when using the max sentinel.
+
+\subsection{Executor module repay implementation}
+
+My executor module implements the repay action symmetrically to supply: it first approves the Pool to pull the tokens, then calls repay.
+
+\begin{lstlisting}[language=Java,caption={Repay implementation in the executor},label=lst:executor-repay]
+if (action == SmartAAVE.ActionAAVE.REPAY) {
+    _execute(asset, 0, abi.encodeCall(IERC20.approve, (pool, amount)));
+    _execute(
+        pool,
+        0,
+        abi.encodeCall(IPool.repay, (asset, amount, 2, onBehalfOf))
+    );
+}
+\end{lstlisting}
+
+The first \texttt{\_execute} call approves the Pool to spend the repayment amount from the smart account. The second call invokes \texttt{pool.repay()}, which burns the corresponding debt tokens and transfers the repayment amount from the smart account back to the pool. The interest rate mode is fixed at 2 (variable), consistent with how the borrow action was implemented.
+
+\section{Testing on a Mainnet Fork}
+
+Testing DeFi integrations requires interacting with real protocol state. I use Foundry's forking capabilities to run tests against actual AAVE contracts deployed on Ethereum mainnet.
+
+\subsection{Fork setup}
+
+The test suite connects to a mainnet fork using the real AAVE V3 Pool address and token addresses:
+
+\begin{lstlisting}[language=Java,caption={Test contract setup},label=lst:test-setup]
+contract ExecutorTemplateTest is RhinestoneModuleKit, Test {
+    AccountInstance internal instance;
+    ExecutorTemplate internal executor;
+    address pool = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+    function setUp() public {
+        init();
+        executor = new ExecutorTemplate();
+        instance = makeAccountInstance("ExecutorTemplate");
+        vm.deal(address(instance.account), 10 ether);
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: address(executor),
+            data: abi.encode(pool, WETH, USDC)
+        });
+    }
+}
+\end{lstlisting}
+
+The \texttt{RhinestoneModuleKit} base contract provides helpers for creating smart accounts and installing modules. I create a new smart account instance and install my executor module, passing the pool address and supported assets as initialization data.
+
+\subsection{Testing supply}
+
+To test the supply flow, I use Foundry's \texttt{deal} cheatcode to mint WETH directly to the smart account, then execute a supply operation:
+
+\begin{lstlisting}[language=Java,caption={Supply test},label=lst:test-supply]
+function testExecSupply() public {
+    deal(WETH, address(instance.account), 10 ether);
+    supply();
+    assertEq(IERC20(WETH).balanceOf(address(instance.account)), 0);
+}
+
+function supply() public {
+    bytes memory supplyData = abi.encode(
+        WETH,
+        10 ether,
+        address(instance.account),
+        0,
+        0  // ActionAAVE.SUPPLY
+    );
+    instance.exec({
+        target: address(executor),
+        value: 0,
+        callData: abi.encodeWithSelector(
+            ExecutorTemplate.execute.selector,
+            supplyData
+        )
+    });
+}
+\end{lstlisting}
+
+The test verifies that after supplying, the smart account's WETH balance is zero, confirming that all tokens were transferred to AAVE. The account now holds aWETH tokens instead, representing its position in the lending pool.
+
+\subsection{Testing withdraw}
+
+The withdraw test builds on the supply test by first supplying tokens, then withdrawing them:
+
+\begin{lstlisting}[language=Java,caption={Withdraw test},label=lst:test-withdraw]
+function testExecWithdrawSuccess() public {
+    deal(WETH, address(instance.account), 10 ether);
+    supply();
+    bytes memory withdrawData = abi.encode(
+        WETH,
+        10 ether,
+        address(instance.account),
+        0,
+        1  // ActionAAVE.WITHDRAW
+    );
+    instance.exec({
+        target: address(executor),
+        value: 0,
+        callData: abi.encodeWithSelector(
+            ExecutorTemplate.execute.selector,
+            withdrawData
+        )
+    });
+    assertGt(IERC20(WETH).balanceOf(address(instance.account)), 10);
+}
+\end{lstlisting}
+
+The assertion \texttt{assertGt(..., 10)} verifies that the withdrawn amount exceeds the original supply. This confirms that the AAVE integration is working correctly and that interest accrues on supplied assets. Even in the short time between supply and withdraw in the test, the forked mainnet state includes accumulated interest from real protocol activity.
+
+\subsection{Testing borrow with fuzz testing}
+
+The borrow functionality requires more comprehensive testing due to the additional complexity of collateralization, health factors, and interest accrual. I use Foundry's fuzz testing capabilities to test the borrow flow across a range of input values, with each test configured to run at least 10 iterations. All tests use USDC as collateral and borrow WETH.
+
+I implemented five fuzz tests to verify different aspects of the borrow functionality:
+
+\begin{enumerate}
+    \item \textbf{Basic borrow success}: Verifies that borrowing works correctly for various amounts. The test supplies 10,000 USDC as collateral, borrows a fuzzed amount of WETH (between 0.001 and 1 ETH), and confirms the borrowed tokens were received. The \texttt{bound} function constrains the fuzz input to amounts that should succeed given the collateral.
+
+    \item \textbf{Health factor verification}: Confirms that after borrowing within safe limits, the health factor remains above 1 (represented as \texttt{1e18} in AAVE's 18-decimal precision). This ensures positions created by the executor are safe from immediate liquidation.
+
+    \item \textbf{Interest accrual}: Uses Foundry's \texttt{vm.warp} cheatcode to advance blockchain time by one year, then verifies that the debt has increased. This demonstrates that borrowing has ongoing costs---users must account for interest when managing their positions.
+
+    \item \textbf{Liquidation conditions}: Simulates a collateral price crash by using \texttt{vm.mockCall} to override the Chainlink oracle's \texttt{latestAnswer()} function, making it return near-zero for USDC. With the collateral worthless, the health factor drops below 1, confirming that price volatility can make positions liquidatable.
+
+    \item \textbf{High LTV positions}: Tests larger positions with \$50,000 USDC collateral and borrowing 5-10 ETH. This exercises higher-value scenarios while verifying the position maintains a safe health factor and records a non-zero LTV.
+\end{enumerate}
+
+These tests collectively validate that the borrow implementation correctly interacts with AAVE's lending protocol and that the key risk metrics (health factor, LTV, debt accrual) behave as expected.
+
+\subsection{Testing repay with fuzz testing}
+
+The repay tests build on the borrow setup and verify that repaying has the expected effect on the borrowing position. Like the borrow tests, they use USDC as collateral and WETH as the borrowed asset.
+
+\begin{lstlisting}[language=Java,caption={Repay helper function},label=lst:test-repay-helper]
+function repay(uint256 amount) internal {
+    bytes memory data = abi.encode(
+        WETH,
+        amount,
+        address(instance.account),
+        0,
+        3  // ActionAAVE.REPAY
+    );
+    instance.exec({
+        target: address(executor),
+        value: 0,
+        callData: abi.encodeWithSelector(
+            ExecutorTemplate.execute.selector,
+            data
+        )
+    });
+}
+\end{lstlisting}
+
+I implemented two fuzz tests to verify different aspects of the repay functionality:
+
+\begin{enumerate}
+    \item \textbf{Debt reduction}: Verifies that repaying reduces the outstanding debt. The test supplies 10,000 USDC as collateral, borrows a fuzzed amount of WETH, records the total debt via \texttt{getUserAccountData}, repays the same amount, and asserts that the debt after repayment is strictly less than before. This confirms that the approval and repay calls are correctly routed through the smart account.
+
+\begin{lstlisting}[language=Java,caption={Repay debt reduction test},label=lst:test-repay-debt]
+function testFuzz_RepayReducesDebt(uint256 borrowAmt) public {
+    uint256 collateral = 10_000 * 10 ** USDC_DECIMALS;
+    borrowAmt = bound(borrowAmt, 0.001 ether, 1 ether);
+    deal(USDC, address(instance.account), collateral);
+    supplyCollateral(collateral);
+    borrow(borrowAmt);
+    (, uint256 debtBefore,,,,) = IPool(pool)
+        .getUserAccountData(address(instance.account));
+    repay(borrowAmt);
+    (, uint256 debtAfter,,,,) = IPool(pool)
+        .getUserAccountData(address(instance.account));
+    assertLt(debtAfter, debtBefore);
+}
+\end{lstlisting}
+
+    \item \textbf{Health factor restoration}: Verifies that repaying can bring a liquidatable position back to safety. The test borrows enough to create a healthy position, then uses \texttt{vm.mockCall} to crash the USDC oracle price, pushing the health factor below 1. It then clears the mock with \texttt{vm.clearMockedCalls} (restoring real prices) and repays the borrowed amount. The final assertion confirms that the health factor is above 1, demonstrating that the position has been rescued from liquidation risk.
+
+\begin{lstlisting}[language=Java,caption={Repay health factor restoration test},label=lst:test-repay-health]
+function testFuzz_RepayRestoresHealthFactor(
+    uint256 borrowAmt
+) public {
+    uint256 collateral = 10_000 * 10 ** USDC_DECIMALS;
+    borrowAmt = bound(borrowAmt, 0.5 ether, 1 ether);
+    deal(USDC, address(instance.account), collateral);
+    supplyCollateral(collateral);
+    borrow(borrowAmt);
+    address oracle = IPoolAddressesProvider(ADDRESSES_PROVIDER)
+        .getPriceOracle();
+    address usdcSource = IAaveOracle(oracle).getSourceOfAsset(USDC);
+    vm.mockCall(
+        usdcSource,
+        abi.encodeWithSignature("latestAnswer()"),
+        abi.encode(int256(1))
+    );
+    (,,,,, uint256 healthBefore) = IPool(pool)
+        .getUserAccountData(address(instance.account));
+    assertLt(healthBefore, 1e18);
+    vm.clearMockedCalls();
+    repay(borrowAmt);
+    (,,,,, uint256 healthAfter) = IPool(pool)
+        .getUserAccountData(address(instance.account));
+    assertGt(healthAfter, 1e18);
+}
+\end{lstlisting}
+\end{enumerate}
+
+Together these tests confirm the full lifecycle of a borrowing position managed through the executor: supply collateral, borrow against it, and repay to close the debt and restore safety. The health factor restoration test is particularly instructive because it demonstrates a concrete use case for the repay action---recovering a position that would otherwise be liquidated.

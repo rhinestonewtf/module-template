@@ -14,3 +14,6 @@ solady/=node_modules/solady/src/
 solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
+
+aave-v4/=lib/aave-v4/
+forge-std/=lib/forge-std/src/

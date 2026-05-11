@@ -5,29 +5,36 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/registry/RegistryDeployer.sol";
 
 // Import modules here
+import { ExecutorTemplate } from "src/ExecutorTemplate.sol";
 import { ValidatorTemplate } from "src/ValidatorTemplate.sol";
 
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
-        // Setup module bytecode, deploy params, and data
-        bytes memory bytecode = type(ValidatorTemplate).creationCode;
         bytes memory resolverContext = "";
         bytes memory metadata = "";
 
-        // Get private key for deployment
         vm.startBroadcast(vm.envUint("PK"));
 
-        // Deploy module
-        address module = deployModule({
-            initCode: bytecode,
+        // Deploy Executor (Aave actions)
+        address executorModule = deployModule({
+            initCode: type(ExecutorTemplate).creationCode,
             resolverContext: resolverContext,
-            salt: bytes32(0),
+            salt: bytes32(uint256(1)),
             metadata: metadata
         });
 
-        // Stop broadcast and log module address
+        // Deploy Validator (template)
+        address validatorModule = deployModule({
+            initCode: type(ValidatorTemplate).creationCode,
+            resolverContext: resolverContext,
+            salt: bytes32(uint256(2)),
+            metadata: metadata
+        });
+
         vm.stopBroadcast();
-        console.log("Deploying module at: %s", module);
+
+        console.log("ExecutorTemplate module: %s", executorModule);
+        console.log("ValidatorTemplate module: %s", validatorModule);
     }
 }

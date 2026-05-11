@@ -9,3 +9,12 @@ docs/
 # Dotenv file
 .env
 node_modules
+/report/template/main.aux
+/report/template/main.bbl
+/report/template/main.blg
+/report/template/fdb_latexmk
+/report/template/main.fls
+/report/template/main.log
+/report/template/main.toc
+
+/**/.DS_STORE

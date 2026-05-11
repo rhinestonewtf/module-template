@@ -1,0 +1,72 @@
+AAVE Executor Module — Gas Comparison
+========================================
+Measurement methodology
+-----------------------
+Test contract: test/Gas.t.sol
+Fork:          Ethereum mainnet, block 18,000,000 (foundry.toml)
+EVM version:   Cancun
+Forge profile: default (no optimizer overrides)
+TX_BASE:       21,000 added per logical on-chain transaction
+
+EOA path:    direct calls from a pranked EOA to AAVE Pool. Per-call
+             execution gas measured with gasleft(); TX_BASE * N added,
+             where N is the number of separate transactions.
+Native 7579: same raw approve/Pool calls bundled as Execution[] inside
+             one ERC-7579 batched UserOperation. Routed through the
+             EntryPoint (handleOps). TX_BASE added once for the bundler
+             transaction.
+Module:      one or more executor.execute(action) calls bundled as
+             Execution[] in one UserOperation. Same EntryPoint path.
+
+Workloads
+---------
+Supply         = approve(USDC) + Pool.supply(USDC, 10k)
+Supply+Borrow  = the above + Pool.borrow(WETH, 0.5)
++Repay         = the above + approve(WETH) + Pool.repay(WETH, 0.5)
+Full cycle     = the above + Pool.withdraw(USDC, 5k)
+
+Results (gas units, total cost the user pays)
+---------------------------------------------
+Workflow              | EOA       | Native 7579 | Module
+----------------------+-----------+-------------+-----------
+Supply                |   251,824 |     502,911 |   525,475
+Supply+Borrow         |   510,996 |     760,165 |   798,728
+Supply+Borrow+Repay   |   629,701 |     866,148 |   921,805
+Full cycle (4 actions)|   715,477 |     952,055 | 1,020,512
+
+Tx counts per workflow
+----------------------
+Supply         : EOA 2 tx | SA 1 userOp
+Supply+Borrow  : EOA 3 tx | SA 1 userOp
++Repay         : EOA 5 tx | SA 1 userOp
+Full cycle     : EOA 6 tx | SA 1 userOp
+
+Derived metrics
+---------------
+Module overhead vs Native 7579 batch (per action):
+   Supply:        +22,564 (~+4.5%)
+   Supply+Borrow: +38,563
+   +Repay:        +55,657
+   Full cycle:    +68,457
+
+Smart account overhead vs EOA (per workflow):
+   Supply:        +273,651
+   Supply+Borrow: +287,732
+   +Repay:        +292,104
+   Full cycle:    +305,035
+
+Break-even analysis: smart account would only undercut EOA once the EOA
+path requires more than 11-13 separate transactions, since each EOA
+transaction adds 21,000 in base fee while smart account overhead stays
+roughly constant per UserOperation (~240-250k).
+
+Implication: ERC-7579 + executor module is not a gas-saving optimization.
+The value is delivered elsewhere -- single signature for multi-action
+workflows, programmable session keys, paymaster sponsorship, and
+encapsulated AAVE-specific safety logic in the module itself.
+
+Reproducing
+-----------
+   forge test --match-contract GasTest -vv
+
+Outputs printed via console.log; this file is the human-readable summary.

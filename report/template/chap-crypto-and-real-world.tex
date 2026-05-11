@@ -1,0 +1,141 @@
+\chapter{Crypto and the Real World}
+\label{chap:crypto-real-world}
+
+The previous chapter introduced blockchain technology and Ethereum from a technical perspective. This chapter bridges the gap between the technical infrastructure and the practical question: how does Ethereum interact with the real world? It explains how people acquire tokens, what kinds of assets exist, why anyone would hold crypto instead of traditional savings, and why overcollateralized borrowing---which may seem paradoxical at first---is actually one of the most powerful tools in decentralized finance.
+
+\section{Exchanges: From Euros to Tokens}
+
+To use any blockchain-based service, a user first needs to acquire tokens. The most common way to do this is through a \textbf{cryptocurrency exchange}, which acts as a bridge between traditional currencies (fiat) and digital assets.
+
+\subsection{Centralized exchanges}
+
+Centralized exchanges (CEXs) such as Coinbase, Binance, and Kraken work similarly to online brokerages. A user creates an account, completes identity verification (known as Know Your Customer or KYC), and links a bank account or credit card. They can then buy cryptocurrencies directly with euros, dollars, or other fiat currencies.
+
+The process is straightforward:
+\begin{enumerate}
+    \item Register and verify identity on the exchange.
+    \item Deposit fiat money via bank transfer or card payment.
+    \item Place a buy order for the desired cryptocurrency (e.g., ETH, USDC).
+    \item Optionally, withdraw the purchased tokens to a personal wallet.
+\end{enumerate}
+
+Centralized exchanges hold custody of the user's funds while they remain on the platform. This makes the experience familiar---similar to using a bank---but introduces a trust requirement: users depend on the exchange to safeguard their assets. Exchange failures, such as the collapse of FTX in 2022, have demonstrated the risks of this custodial model \cite{ftxCollapse}.
+
+\subsection{Decentralized exchanges}
+
+Decentralized exchanges (DEXs) such as Uniswap operate entirely on the blockchain through smart contracts. Instead of a central order book, DEXs use \textbf{liquidity pools}: smart contracts where users deposit token pairs. Traders swap one token for another directly against these pools, with prices determined by an automated market maker (AMM) algorithm.
+
+DEXs do not require identity verification and never hold custody of user funds. However, they cannot accept fiat currency directly---a user must already hold some cryptocurrency to use a DEX. In practice, most newcomers start with a centralized exchange to convert fiat to crypto, and later use decentralized exchanges for token-to-token swaps.
+
+\section{Types of Crypto Assets}
+
+The term ``crypto'' encompasses more than just currencies. Several distinct types of assets exist on Ethereum:
+
+\begin{itemize}
+    \item \textbf{Native tokens}: ETH is Ethereum's native currency. It is used to pay transaction fees (gas), participate in staking, and serves as the base unit of value across the ecosystem.
+
+    \item \textbf{Stablecoins}: Tokens pegged to a traditional currency, typically the US dollar. Examples include USDC (backed by dollar reserves held by Circle) and DAI (backed by overcollateralized crypto deposits). Stablecoins allow users to hold dollar-denominated value on the blockchain without exposure to crypto price volatility.
+
+    \item \textbf{Governance tokens}: Tokens that grant voting rights in a protocol's decision-making process. For example, AAVE token holders can vote on protocol upgrades, risk parameters, and treasury allocations.
+
+    \item \textbf{Wrapped tokens}: Representations of assets from other blockchains. Wrapped Bitcoin (WBTC) is an ERC-20 token on Ethereum backed 1:1 by Bitcoin held in custody, allowing Bitcoin holders to participate in Ethereum's DeFi ecosystem.
+
+    \item \textbf{Non-Fungible Tokens (NFTs)}: Unique tokens representing ownership of a specific item---digital art, game items, domain names, or real-world asset certificates.
+
+    \item \textbf{Liquidity Provider (LP) tokens}: Tokens received when depositing into a DEX liquidity pool. They represent the user's share of the pool and can themselves be used in other DeFi protocols.
+\end{itemize}
+
+These assets are not isolated. DeFi protocols allow them to be combined: a user might deposit ETH to earn interest, use the interest-bearing aETH as collateral to borrow USDC, and then provide that USDC to a liquidity pool. This composability is what makes the ecosystem powerful---and what the previous chapter described as ``money legos.''
+
+\section{Earning Yield: Staking vs. Bank Savings}
+
+One of the most tangible reasons people move assets into crypto is the potential for higher returns compared to traditional savings.
+
+\subsection{Traditional bank savings}
+
+In traditional finance, a savings account in a European bank typically offers an annual interest rate between 0.5\% and 3\%, depending on the institution, country, and whether the deposit is locked for a fixed term. This interest comes from the bank lending deposited funds to borrowers at higher rates, keeping the spread as profit.
+
+For context, as of early 2025, typical European savings rates are:
+\begin{itemize}
+    \item Demand deposits (instant access): 0.5\%--1.5\% APY
+    \item Fixed-term deposits (1 year lock): 2\%--3\% APY
+\end{itemize}
+
+These rates are guaranteed by the bank and protected by deposit insurance schemes (up to \euro{100,000} per depositor per bank in the EU), making them extremely low-risk.
+
+\subsection{Staking ETH}
+
+Ethereum's Proof of Stake consensus mechanism (described in Chapter \ref{chap:introduction}) creates a native way to earn yield. Validators who stake 32 ETH to secure the network receive rewards funded by transaction fees and newly issued ETH. As of early 2025, \textbf{ETH staking yields approximately 3\%--4\% APY}.
+
+Users who do not have 32 ETH can participate through \textbf{liquid staking} services like Lido. Users deposit any amount of ETH and receive a liquid staking token (stETH) that represents their staked position. This token accrues staking rewards over time and can be freely traded, used as collateral, or deposited into other DeFi protocols. This means the user earns staking yield while retaining liquidity---something impossible with a bank's fixed-term deposit.
+
+\subsection{Supplying to lending protocols}
+
+Beyond staking, users can earn yield by supplying assets to lending protocols like AAVE. When a user deposits USDC into AAVE, they earn interest paid by borrowers. These rates fluctuate with supply and demand: when many users want to borrow USDC, the interest rate rises; when few do, it falls. Typical supply rates for stablecoins on AAVE range from 2\% to 8\% APY depending on market conditions.
+
+The key differences between these options and a bank account are:
+
+\begin{center}
+\begin{tabular}{l c c c}
+\hline
+& \textbf{Bank savings} & \textbf{ETH staking} & \textbf{AAVE supply} \\
+\hline
+Typical APY & 0.5\%--3\% & 3\%--4\% & 2\%--8\% \\
+Access & Instant or locked & Liquid (via Lido) & Instant \\
+Risk & Deposit insurance & Smart contract risk & Smart contract risk \\
+Custody & Bank holds funds & Self-custody & Self-custody \\
+Requirements & KYC, bank account & ETH holdings & Any supported token \\
+\hline
+\end{tabular}
+\end{center}
+
+Higher yields come with different risks. There is no government deposit insurance in DeFi. Smart contract bugs, oracle failures, or governance attacks could result in loss of funds. However, protocols like AAVE have been running since 2020, securing billions of dollars, and have been extensively audited. The risk profile is different from a bank account---not necessarily higher or lower, but different in nature.
+
+\section{Why Borrow Overcollateralized?}
+
+The most counterintuitive aspect of DeFi lending is overcollateralization: to borrow \$1,000, a user must lock up more than \$1,000 in collateral. If one already has the assets, why borrow at all?
+
+This question has several concrete answers:
+
+\subsection{Accessing liquidity without selling}
+
+Consider a user who holds 10 ETH, currently worth \$30,000, and believes the price will rise. They need \$5,000 to pay for a car repair. Without DeFi, they would have to sell some ETH---triggering a capital gains tax event and losing future upside if the price increases.
+
+With a protocol like AAVE, they can instead deposit their 10 ETH as collateral and borrow \$5,000 in USDC. They pay the car repair, keep their ETH exposure, and repay the loan later---possibly after ETH has appreciated. The borrowing cost (interest) is typically 2\%--5\% APY, which may be far less than the potential upside of holding ETH.
+
+\subsection{Tax efficiency}
+
+In many jurisdictions, selling cryptocurrency is a taxable event that triggers capital gains tax. Borrowing against crypto holdings is \textbf{not a sale}, and therefore typically does not trigger a tax obligation. This allows users to access the economic value of their holdings without the tax consequences of liquidating them.
+
+\subsection{Leveraged positions}
+
+Advanced users use borrowing to create leveraged positions. For example:
+\begin{enumerate}
+    \item Deposit 10 ETH as collateral.
+    \item Borrow USDC against the ETH.
+    \item Use the borrowed USDC to buy more ETH.
+    \item Deposit the additional ETH as more collateral.
+\end{enumerate}
+
+This cycle amplifies exposure to ETH price movements. If ETH rises, the gains are multiplied. If ETH falls, the losses are also amplified and the position risks liquidation. This is conceptually similar to margin trading in traditional finance.
+
+\subsection{Yield farming}
+
+Users can borrow assets at one rate and supply them elsewhere at a higher rate, capturing the spread. For example, a user might borrow USDC at 3\% from AAVE and supply it to another protocol offering 6\%, netting a 3\% profit on the borrowed amount. The collateral continues earning its own yield simultaneously.
+
+\subsection{A practical example}
+
+To make this concrete, consider the following scenario:
+
+Alice holds 10 ETH (worth \$30,000) and wants to earn yield on her position while accessing some liquidity. She:
+
+\begin{enumerate}
+    \item Deposits 10 ETH into AAVE, earning approximately 1\% supply APY (\$300/year).
+    \item Borrows 10,000 USDC against her ETH collateral at 3\% variable rate (\$300/year in interest).
+    \item Stakes the 10,000 USDC in a stablecoin yield vault earning 5\% APY (\$500/year).
+    \item Net result: Alice earns \$300 + \$500 -- \$300 = \$500/year in yield, while maintaining full exposure to ETH price appreciation and having accessed \$10,000 in spendable value.
+\end{enumerate}
+
+Compare this to a traditional bank: Alice could sell her ETH for \$30,000, deposit it in a savings account at 2\% APY (\$600/year), but she would lose all exposure to ETH price movements and trigger a taxable event on any gains.
+
+This example illustrates why DeFi borrowing exists despite overcollateralization. The collateral is not ``locked away uselessly''---it continues earning yield, maintains price exposure, and the borrowed funds create additional earning opportunities. The net position can be significantly more capital-efficient than simply holding assets idle.

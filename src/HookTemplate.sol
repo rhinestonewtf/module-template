@@ -32,7 +32,10 @@ contract HookTemplate is ERC7579HookBase {
      *
      * @return true if the module is initialized, false otherwise
      */
-    function isInitialized(address smartAccount) external view returns (bool) { }
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        smartAccount;
+        return true;
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC

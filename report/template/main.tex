@@ -1,0 +1,84 @@
+\documentclass[a4paper,oneside,11pt]{memoir}
+
+\usepackage[utf8]{inputenc} % input encoding
+\usepackage[T1]{fontenc} % font encoding
+
+\usepackage{graphicx} %to include images/graphics
+\usepackage{amsmath,amssymb} %better math type setting
+\usepackage{listings} %for source code snippets
+\usepackage{textcomp} %for upquote
+\usepackage{xcolor} % nice colors (for source code)
+\usepackage{eurosym} % euro symbol
+
+\renewcommand{\ttdefault}{pcr} % nicer font for source code
+
+% an example configuration of the 'listings' package
+\lstset{basicstyle=\ttfamily, 
+        keywordstyle=\color{purple}\ttfamily,
+        commentstyle=\color{gray}\ttfamily,
+        stringstyle=\color{orange}\ttfamily,
+        captionpos=b,
+        float=tb,
+        upquote=true,
+}
+
+\chapterstyle{tandh} % configuration of the 'memoir' class
+
+%
+% The actual document starts here
+%
+\begin{document}
+
+\input{frontpage}
+
+\cleardoublepage
+
+\frontmatter
+
+\input{abstract}
+
+\cleardoublepage
+
+\tableofcontents
+
+\mainmatter
+
+%
+% We have one file per chapter:
+%
+
+% Introduction chapter in 'chap-introduction.tex'
+\input{chap-introduction}
+
+% Crypto and the Real World chapter in 'chap-crypto-and-real-world.tex'
+\input{chap-crypto-and-real-world}
+
+% Blockchain Beyond Finance chapter in 'chap-real-world-blockchain.tex'
+\input{chap-real-world-blockchain}
+
+% Background chapter in 'chap-background.tex'
+\input{chap-background}
+
+% ...
+
+% Analysis and Design chapter in 'chap-analysis-and-design.tex'
+\input{chap-analysis-and-design}
+
+% Implementation chapter in 'chap-implementation.tex'
+\input{chap-implementation}
+
+% Evaluation chapter in 'chap-evaluation.tex'
+\input{chap-evaluation}
+
+% Conclusion chapter in 'chap-conclusion.tex'
+\input{chap-conclusion}
+
+\appendix
+
+% Appendix chapter in 'chap-appendix.tex'
+\input{chap-appendix}
+
+\bibliographystyle{plain}
+\bibliography{mybibliography}
+
+\end{document}

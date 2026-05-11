@@ -1,3 +1,6 @@
 node_modules/
+lib/
+out/
+cache/
 test/
 script/

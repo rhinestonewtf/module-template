@@ -1,0 +1,279 @@
+\chapter{Blockchain Beyond Finance: Real-World Applications}
+\label{chap:real-world-blockchain}
+
+The previous chapter framed Ethereum and AAVE through the lens of
+decentralised finance: how users acquire tokens, what assets exist, why
+overcollateralised borrowing is useful, and how DeFi yield compares with a
+traditional bank account. That framing is incomplete. The same underlying
+infrastructure -- public smart contracts, deterministic execution,
+transferable on-chain claims -- has been used for purposes that have nothing
+to do with margin loans or yield farming. This chapter looks at two of those
+threads. The first is the tokenisation of \emph{real-world assets} (RWAs),
+where Treasury bills and apartments are wrapped into transferable tokens.
+The second is the use of blockchain rails in low-income, low-trust
+environments, illustrated by a concrete case study from Kenyan agriculture.
+
+The aim is not to argue that blockchain is the right answer everywhere. It
+is to show two settings where the technology is already deployed at
+measurable scale, and to be honest about what it does and does not solve in
+each case.
+
+\section{Tokenised Real-World Assets}
+
+A real-world asset, in the on-chain sense, is anything whose ownership lives
+primarily off-chain -- a Treasury bill, a corporate bond, a piece of real
+estate, a barrel of oil -- but whose right of ownership is represented by a
+token on a public blockchain. The token does not replace the underlying
+legal claim; it is a programmable wrapper around it, issued by a regulated
+entity that holds the off-chain asset in custody. The benefit the token
+offers is the same set of properties that ETH itself offers: it can be
+transferred 24/7, it can be used as collateral in a smart contract, it can
+be split across an arbitrary number of investors, and its movements are
+publicly auditable.
+
+\subsection{Tokenised government bonds}
+
+The first RWA category to find clear product-market fit has been
+short-dated government debt. A token issuer holds Treasury bills in
+custody off-chain and, in exchange, mints an ERC-20 token whose price is
+pegged to one dollar and which pays the underlying yield directly to its
+holder. Once on-chain, the token behaves like any other ERC-20: it can be
+sent in a single transaction at any time of day, used as collateral in
+another smart contract, or split across many holders without any paperwork.
+BlackRock's BUIDL fund, launched on Ethereum in March 2024, is the
+best-known instance and reached several hundred million dollars in
+deposits within weeks of launch \cite{blackrockBuidl2024,coindeskBuidl2024}.
+
+The technically interesting property is composability. Once the bond is
+represented as a token, the rest of the on-chain ecosystem can use it as
+an input without any further integration work. A smart account, an AMM, or
+an AAVE-style lending pool can hold or accept the token by virtue of the
+ERC-20 interface alone -- the same property this thesis relies on for
+every interaction with the AAVE pool. A paper-based claim to a Treasury
+bill cannot be plugged into any of those systems.
+
+\subsection{Tokenised real estate}
+
+A more ambitious RWA category is residential real estate. The pattern is
+the same as for bonds: an off-chain entity holds the legal title to a
+property and issues ERC-20-style tokens that represent fractional
+ownership of it; rental income is distributed to token holders on-chain.
+Tokens are typically priced at a few tens of dollars, so the barrier to
+real-estate investment is reduced by several orders of magnitude.
+
+The interesting twist with real estate is that it exposes the central
+limitation of any RWA design. A 2025 investigation into RealT, one of the
+larger U.S.\ tokenisation platforms, found that the company had issued
+tokens for properties whose deeds were never transferred to the issuing
+entity and that some underlying buildings were uninhabitable
+\cite{realtInvestigation2025}. The smart contract was working exactly as
+specified: tokens were minted, rental payments were distributed. What it
+could not verify was whether the off-chain reality matched the on-chain
+representation.
+
+\subsection{What this means for the rest of the thesis}
+
+The pattern across both examples is the same. Tokenisation makes a claim
+liquid, divisible, and programmable. It does not, on its own, improve the
+quality of the underlying claim. Where the off-chain side is mechanical
+and well-regulated -- a Treasury bill held by an established custodian --
+the wrapper adds genuine value, because every property of the asset is
+already verifiable by parties who do not need to trust each other. Where
+the off-chain side depends on a single operator's honesty -- a startup
+buying houses, a private credit fund, a commodities trader -- the wrapper
+inherits whatever weakness exists in that operator.
+
+This is not a flaw in the technology. It is the consequence of a clean
+boundary: a smart contract can only enforce the properties of data that
+lives on-chain. Whether the off-chain world has supplied that data
+faithfully is a question of legal structure, audit, and institutional
+trust, not of cryptography. The same observation will reappear in the
+agricultural case studies in the next section, where the off-chain inputs
+are weather measurements rather than property deeds, and where the
+trustworthiness of those inputs is what determines whether the contract is
+useful.
+
+\section{Blockchain in Low-Income, Low-Trust Environments}
+
+A different and arguably more interesting use of the same infrastructure
+has emerged in settings where the alternative is not a Bloomberg terminal
+but a paper ledger, a verbal agreement, or no service at all. Smallholder
+agriculture in sub-Saharan Africa is one of those settings. Roughly 7.5
+million smallholder farmers work the land in Kenya alone
+\cite{etheriscLcc2023}; most are excluded from formal insurance, from
+traceable market data, and often from any record of the transactions they
+make with intermediaries. Two projects -- both running on public Ethereum
+or EVM-compatible chains, both small but well-documented -- give a
+concrete sense of what blockchain rails actually do for these users.
+
+\subsection{Parametric crop insurance: ACRE Africa and Etherisc in Kenya}
+
+Crop insurance for smallholders has been a long-running development
+challenge. The traditional model -- a claims adjuster visits the farm,
+assesses the damage, files paperwork, and triggers a payout weeks later --
+does not scale economically when premiums are a few dollars and farms are
+distributed across thousands of villages. The result is that farmers who
+most need protection from drought or flood cannot access it at a price
+that makes sense for either party.
+
+The pilot run by ACRE Africa with Etherisc and Mercy Corps Ventures
+replaces the human adjuster with a parametric design. The product, called
+Bima Pima, is a weather-index insurance: it pays out when an objective
+measurement of weather -- rainfall over the growing season, measured by
+satellite -- falls below a defined threshold for the farmer's region. There
+is no inspection, no claim form, and no negotiation. The Etherisc Generic
+Insurance Framework, deployed as a set of Ethereum smart contracts,
+encodes the policy conditions; Chainlink oracles feed in the satellite
+rainfall data from the Africa Rainfall Climatology dataset; and when the
+contract fires, a payout is delivered to the farmer's M-Pesa mobile money
+account \cite{mercyCorpsEtherisc2022}.
+
+The cost structure is what makes the design viable. Farmers pay
+approximately fifty cents to one dollar in premiums per bag of seed, which
+is bundled into the seed price. A scratch card distributed with the seed
+bag carries a code that the farmer texts in by USSD from a feature phone,
+which is enough to activate the policy. The whole user-facing flow
+requires neither a smartphone nor an internet connection -- which is
+critical, since neither is universal in rural Kenya. The blockchain layer
+is invisible to the farmer and exists primarily to make the back-end
+verifiable: payouts cannot be lost in administrative bottlenecks, and the
+relationship between rainfall data and payout decisions is provable
+in audit.
+
+The pilot covered roughly 12{,}500 maize, sorghum, and green-gram farmers
+in Kenya's 2021 long rains season \cite{mercyCorpsEtherisc2022}. By 2022 a
+follow-up cohort of 7{,}000 more farmers had been added through the
+Lemonade Crypto Climate Coalition, on the Avalanche chain rather than on
+Ethereum, and Etherisc reported having cumulatively insured around
+25{,}000 farmers across the ACRE Africa partnership
+\cite{etheriscLcc2023}. The numbers are modest against ACRE Africa's
+overall reach of 1.7 million smallholders across East Africa, but they are
+not pilot-scale either: the product is in repeat use across multiple
+growing seasons and has been replicated to additional crops and
+geographies.
+
+What does the blockchain layer actually contribute? Removing it would not
+make the parametric design impossible: a centralised database run by an
+insurer could in principle issue the same payouts. The argument made by
+the project teams is that for a population whose primary objection to
+formal insurance is mistrust, a system in which the payout rule is
+publicly inspectable and the oracle data is signed by a known source is
+qualitatively different from a system in which an opaque corporate process
+decides whether a claim is honoured. A farmer who has been historically
+underpaid by intermediaries does not need to take the protocol's word for
+it; the conditions are written in a contract that nobody can edit after
+the fact.
+
+\subsection{Supply chain transparency: AgUnity in Kakamega}
+
+A second case study, also from western Kenya, addresses a different
+problem: information asymmetry along the agricultural value chain. The
+Australian startup AgUnity, working with Virginia Tech's Center for
+International Research, Education, and Development and Kenya's Egerton
+University, deployed a smartphone application called the AgUnity V3 Super
+App in Kakamega County. The app is targeted at smallholder farmers of
+African Indigenous Vegetables and at the traders and retailers who buy
+from them, and its central feature is a blockchain-backed record of every
+transaction in the supply chain
+\cite{agunityAIV2022,disruptionAgUnity2022}.
+
+The problem the app addresses is that smallholder farmers historically
+operated as price-takers. Brokers would arrive at the farm, name a price,
+weigh the produce on their own scales, and pay in cash with no receipt.
+Farmers had no record of what they had sold, no information about what
+prices were being paid elsewhere in the country, and no leverage in the
+next negotiation. The result was systematic underpayment, a high rate of
+exploitative brokering, and a strong incentive for farmers to under-invest
+in producing quality grades that they could not prove or charge for.
+
+The intervention was a smartphone -- pre-loaded with the AgUnity app and
+sometimes co-financed -- given to each actor in the value chain. The app
+records each transaction (quantity, grade, price, parties) and writes it
+to a blockchain ledger that the farmer, the trader, and other value-chain
+participants can all see. The transaction record cannot be retroactively
+altered by any single party. Farmers gain a permanent history of their
+sales, traders gain a reliable record of the supply they have purchased,
+and consumers downstream can verify whether a vegetable graded as
+``pesticide-free Grade A'' has actually been recorded as such throughout
+its journey \cite{disruptionAgUnity2022}.
+
+The pilot in Kakamega deployed roughly fifty to sixty smartphones to
+producers, traders, and retailers over six months in 2021. The reported
+outcomes are concrete: smallholder incomes rose because farmers could now
+negotiate prices with reference to recent transaction data; weights and
+quantities became standardised on kilograms rather than ad-hoc volumes;
+post-harvest losses dropped because supply and demand could be matched in
+near real time; and reliance on brokers as the only source of market
+information decreased \cite{agunityAIV2022,disruptionAgUnity2022}. The
+project has since extended a token, AgriUT, used as a reward unit, to
+several hundred thousand farmers in the broader region
+\cite{disruptionAgUnity2022}.
+
+As with the Etherisc pilot, the blockchain layer is largely invisible to
+the user. What the user experiences is a smartphone app that remembers
+their transactions and lets them compare prices. What the blockchain
+provides is a guarantee that the record they are looking at has not been
+silently rewritten by the trader on the other side of the transaction.
+That guarantee turns out to be the structurally important property: it is
+what makes the difference between yet another corporate database (which
+the farmer has no reason to trust more than the broker who is already
+cheating them) and a shared ledger whose contents are demonstrably the
+same for everyone with a phone.
+
+\subsection{What these case studies show}
+
+Both the parametric insurance pilot and the AgUnity deployment make a
+similar argument. The technical contribution of blockchain in these
+settings is not throughput, programmability, or yield. It is that the
+system's record of what happened is verifiable by parties who do not trust
+each other and who would have no other shared point of reference. The
+smallholder farmer cannot audit the books of a multinational reinsurer or
+of a vegetable broker. They can, however, look at a transaction confirmed
+on a public chain.
+
+It is worth being careful with the framing. Neither project replaces the
+local institutions on the ground -- the village-based agents who train
+farmers on the insurance product, the seed retailers who hand out the
+scratch cards, the field officers who explain how to grade a vegetable.
+What blockchain enables is a different distribution of trust within those
+existing institutions: the parts of the system that handle data and
+disbursement become inspectable rather than opaque, and the human-facing
+parts get to focus on the work that genuinely requires a human.
+
+The numbers also matter. Twenty-five thousand insured farmers and a few
+hundred thousand AgriUT recipients are not, on a continental scale, a
+revolution. But they are also not zero, they are not theoretical, and the
+products have survived multiple growing seasons -- which is the relevant
+bar for an agricultural intervention.
+
+\section{Synthesis}
+
+Tokenised Treasuries and tokenised real estate, smart-contract crop
+insurance and on-chain supply-chain records, look superficially very
+different. They share a single underlying primitive: a record of an
+agreement, written into a smart contract, that all parties can inspect and
+that no single party can rewrite. The cases where this primitive delivers
+value are the cases where the alternative is a record that one party owns
+and the others have to take on faith -- whether that is a sovereign-bond
+custody chain, a rental ledger, a claims adjuster's report, or a broker's
+verbal price quote.
+
+The cases where blockchain has not yet delivered value are equally
+informative. Where the underlying asset is illiquid, opaque, or
+operationally complex, tokenisation does not fix it; the RealT
+investigation is the cleanest demonstration of that limit. Where a single
+trusted intermediary is already cheap and reliable, replacing it with a
+smart contract usually makes things slower and more expensive; this is why
+no one runs a domestic credit-card network on Ethereum.
+
+The AAVE executor module developed in the rest of this thesis sits firmly
+inside the first category. AAVE is itself an on-chain primitive --
+positions, debts, and liquidations are public state -- and the module
+exposes that primitive to a smart account in a way that other on-chain
+components (validators, hooks, paymasters) can plug into. The broader
+point of this chapter is that the same trust-redistribution that makes a
+parametric insurance payout enforceable for a smallholder farmer in
+Kakamega is the trust-redistribution that makes the executor module
+useful: in both cases, the contract is the spec, the data is the audit
+trail, and no party needs to take any other party's word for what
+happened.
