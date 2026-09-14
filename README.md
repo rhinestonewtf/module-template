@@ -1,5 +1,7 @@
 ## Module Template
 
+> **No longer maintained.** This repository is kept for reference. For new projects, use the [Rhinestone SDK](https://docs.rhinestone.dev).
+
 **A template for building smart account modules using the [ModuleKit](https://github.com/rhinestonewtf/modulekit)**
 
 ## Using the template
@@ -54,7 +56,7 @@ source .env && forge verify-contract --chain-id [YOUR_CHAIN_ID] --watch --ethers
 
 ## Tutorials
 
-For general explainers and guided walkthroughs of building a module, check out our [documentation](https://docs.rhinestone.wtf/modulekit).
+For general explainers and guided walkthroughs of building a module, check out our [documentation](https://erc7579.com/tooling/modulekit).
 
 ## Using this repo
 
